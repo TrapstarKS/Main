@@ -32,7 +32,7 @@ elseif table.find(PlaceIds["BF"], Id) then -- Blox Fruits
 	LoadScript("BloxFruits.lua")
 elseif table.find(PlaceIds["PJS"], Id) then -- Project Slayer
 	LoadScript("PJS.lua")
-elseif table.find(PlaceIds["AFS"], Id) then -- Project Slayer
+elseif table.find(PlaceIds["AFS"], Id) then -- Afs
 	LoadScript("afsdupe.lua")
 else -- Astd
 	LoadScript("Astd.lua")
