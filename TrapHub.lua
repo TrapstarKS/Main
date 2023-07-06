@@ -1,4 +1,3 @@
-
 local repo = "https://raw.githubusercontent.com/TrapstarKSSKSKSKKS/Main/main/"
 local function LoadScript(ScriptName)
 	pcall(function()
@@ -23,6 +22,7 @@ local PlaceIds = {
 	["RG"] = { 914010731 },
 	["BF"] = { 2753915549, 4442272183, 7449423635 },
 	["PJS"] = { 6152116144, 5956785391, 13881804983, 11468075017, 9321822839, 11468034852 },
+        ["AFS"] = {6299805723, 9141645420}
 }
 if table.find(PlaceIds["AA"], Id) then -- Anime Adventures
 	LoadScript("Anime%20Adventures.lua")
@@ -32,6 +32,8 @@ elseif table.find(PlaceIds["BF"], Id) then -- Blox Fruits
 	LoadScript("BloxFruits.lua")
 elseif table.find(PlaceIds["PJS"], Id) then -- Project Slayer
 	LoadScript("PJS.lua")
+elseif table.find(PlaceIds["AFS"], Id) then -- Project Slayer
+	LoadScript("afsdupe.lua")
 else -- Astd
 	LoadScript("Astd.lua")
 end
