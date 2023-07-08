@@ -25,7 +25,11 @@ local PlaceIds = {
         ["AFS"] = {6299805723, 9141645420}
 }
 if table.find(PlaceIds["AA"], Id) then -- Anime Adventures
+	if getgenv().BetaScript then
+        LoadScript("AnimeAdventures-Rewrite.lua")
+	else
 	LoadScript("Anime%20Adventures.lua")
+	end
 elseif table.find(PlaceIds["RG"], Id) then -- RoGhoul
 	LoadScript("RoGhoul.lua")
 elseif table.find(PlaceIds["BF"], Id) then -- Blox Fruits
