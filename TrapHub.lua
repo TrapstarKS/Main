@@ -17,11 +17,12 @@ local function LoadScript(ScriptName)
 	end)
 end
 local Id = game.PlaceId
+local GameId = game.GameId
 local PlaceIds = {
 	["AA"] = { 8304191830, 8349889591 },
 	["RG"] = { 914010731 },
 	["BF"] = { 2753915549, 4442272183, 7449423635 },
-	["PJS"] = { 6152116144, 5956785391, 13881804983, 11468075017, 9321822839, 11468034852 },
+	["PJS"] = { 2142948266 },
         ["AFS"] = {6299805723, 9141645420}
 }
 if table.find(PlaceIds["AA"], Id) then -- Anime Adventures
@@ -34,7 +35,7 @@ elseif table.find(PlaceIds["RG"], Id) then -- RoGhoul
 	LoadScript("RoGhoul.lua")
 elseif table.find(PlaceIds["BF"], Id) then -- Blox Fruits
 	LoadScript("BloxFruits.lua")
-elseif table.find(PlaceIds["PJS"], Id) then -- Project Slayer
+elseif table.find(PlaceIds["PJS"], GameId) then -- Project Slayer
 	LoadScript("PJS.lua")
 elseif table.find(PlaceIds["AFS"], Id) then -- Afs
 	LoadScript("afsdupe.lua")
