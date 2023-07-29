@@ -23,7 +23,8 @@ local PlaceIds = {
 	["RG"] = { 914010731 },
 	["BF"] = { 2753915549, 4442272183, 7449423635 },
 	["PJS"] = { 2142948266 },
-        ["AFS"] = {6299805723, 9141645420}
+        ["AFS"] = {6299805723, 9141645420},
+	['AFSX'] = {4099570905},
 }
 if table.find(PlaceIds["AA"], Id) then -- Anime Adventures
 	if getgenv().BetaScript then
@@ -39,6 +40,8 @@ elseif table.find(PlaceIds["PJS"], GameId) then -- Project Slayer
 	LoadScript("PJS.lua")
 elseif table.find(PlaceIds["AFS"], Id) then -- Afs
 	LoadScript("afsdupe.lua")
+elseif table.find(PlaceIds['AFSX'], GameId) then -- AFSX
+	LoadScript("AFSX.lua")
 else -- Astd
 	LoadScript("Astd.lua")
 end
