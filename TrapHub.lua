@@ -19,14 +19,14 @@ end
 local Id = game.PlaceId
 local GameId = game.GameId
 local PlaceIds = {
-	["AA"] = { 8304191830, 8349889591 },
+	["AA"] = { 3183403065 },
 	["RG"] = { 914010731 },
 	["BF"] = { 2753915549, 4442272183, 7449423635 },
 	["PJS"] = { 2142948266 },
         ["AFS"] = {6299805723, 9141645420},
 	['AFSX'] = {4099570905},
 }
-if table.find(PlaceIds["AA"], Id) then -- Anime Adventures
+if table.find(PlaceIds["AA"], GameId) then -- Anime Adventures
 	if getgenv().BetaScript then
         LoadScript("AnimeAdventures-Rewrite.lua")
 	else
