@@ -39,7 +39,11 @@ elseif table.find(PlaceIds["BF"], Id) then -- Blox Fruits
 elseif table.find(PlaceIds["PJS"], GameId) then -- Project Slayer
 	LoadScript("PJS.lua")
 elseif table.find(PlaceIds["AFS"], Id) then -- Afs
+	if getgenv().BetaScript then
+	LoadScript("beta-afs.lua")
+	else
 	LoadScript("afsdupe.lua")
+	end
 elseif table.find(PlaceIds['AFSX'], GameId) then -- AFSX
 	LoadScript("AFSX.lua")
 else -- Astd
