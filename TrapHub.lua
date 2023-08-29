@@ -25,6 +25,7 @@ local PlaceIds = {
 	["PJS"] = { 2142948266 },
         ["AFS"] = {6299805723, 9141645420},
 	['AFSX'] = {4099570905},
+	['PEROXIDE'] = {3419284255},
 }
 if table.find(PlaceIds["AA"], GameId) then -- Anime Adventures
 	if getgenv().BetaScript then
@@ -44,6 +45,8 @@ elseif table.find(PlaceIds["AFS"], Id) then -- Afs
 	else
 	LoadScript("afsdupe.lua")
 	end
+elseif table.find(PlaceIds['PEROXIDE'], GameId) then -- AFSX
+	LoadScript("Peroxide.lua")
 elseif table.find(PlaceIds['AFSX'], GameId) then -- AFSX
 	LoadScript("AFSX.lua")
 else -- Astd
