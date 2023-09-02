@@ -30,3 +30,24 @@ getgenv().codesbf = {
     "Sub2OfficialNoobie",
     "TheGreatAce"
 }
+
+getgenv().codesperoxide = {
+				'RELEASE!!!!',
+				'40kLikesRobloxAPICantHandle60k',
+				'50kLikesWowThatWasFast',
+				'10MVisits!',
+				'30kLikesThanksForSupportingUs',
+				'60kLikesHiGuys',
+				'AmogusGrimaceShake',
+				'80kLikesSorryForACStrikes',
+				'100kLikesYouAllAreEatingGood',
+				'120kLikesHolyMoly',
+				'130kLikesInfiniteCodes',
+				'40MVisits!!!',
+				'30MVisits!!!',
+				'140kLikesNewContentSoon',
+				'HairRatsMatter155!',
+				'ThxForFollowingTyDev10!',
+				'CodeGoblins',
+				'50MVisits!?!?!Wow!!',
+			}
