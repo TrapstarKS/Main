@@ -2,6 +2,6 @@
 
 settingstest = {
    ping = 180,
-   invite = "TrapHub"
+   invite = "3GcV3pVpAB"
 }
 return settingstest
