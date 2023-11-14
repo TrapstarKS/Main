@@ -1,0 +1,395 @@
+repeat
+	wait()
+until game:IsLoaded()
+
+local services
+services = setmetatable({
+	Get = function(self, ...)
+		local allServices = {}
+
+		for _, service in next, { ... } do
+			table.insert(allServices, self[service])
+		end
+
+		return unpack(allServices)
+	end,
+}, {
+	__index = function(self, p)
+		if p == 'VirtualInputManager' then return getvirtualinputmanager and getvirtualinputmanager() or Instance.new('VirtualInputManager') end
+
+		local service = game:GetService(p)
+		if p == 'VirtualInputManager' then service.Name = 'VirtualInputManager ' end
+
+		rawset(self, p, service)
+		return rawget(self, p)
+	end,
+})
+
+local workspace, Players, TPS, UserInputService, HttpService, CoreGui, GuiService, TextService, ScriptContext = services:Get('Workspace', 'Players', 'TeleportService', 'UserInputService', 'HttpService', 'CoreGui', 'GuiService', 'TextService', 'ScriptContext')
+local player = Players.LocalPlayer
+
+function BuildFolderTree()
+	local Folder = 'Trap Hub'
+	local paths = {
+		Folder,
+		Folder .. '/console',
+	}
+
+	for i = 1, #paths do
+		local str = paths[i]
+		if not isfolder(str) then makefolder(str) end
+	end
+end
+
+BuildFolderTree()
+
+do --// Console // TextLogger from Aztup but modified to fit my needs
+	ConsoleLogger = {}
+	ConsoleLogger.__index = ConsoleLogger
+	local screenGui = game:GetObjects('rbxassetid://15357931398')[1]
+	local Text = {}
+	local ProtectGui = protectgui or (syn and syn.protect_gui) or function() end
+	local Configs = {
+		chatLoggerAutoScroll = true,
+		OutputRedirect = true,
+	}
+
+	local Configs = isfile('Trap Hub' .. '/console/configs.json') and HttpService:JSONDecode(readfile('Trap Hub' .. '/console/configs.json')) or writefile('Trap Hub' .. '/console/configs.json', HttpService:JSONEncode(Configs)) and Configs
+
+	local H, S, V = Color3.toHSV(Color3.fromRGB(170, 16, 199))
+	local AccentColorDark = Color3.fromHSV(H, S, V / 1.5)
+
+	local Types = {
+		['WARN'] = [[255,255,0]],
+		['INFO'] = [[50, 180, 255]],
+		['OUTPUT'] = [[230, 230, 230]],
+		['ERROR'] = [[250, 50, 0]],
+	}
+
+	local function cleantext(Text) return Text:gsub('<[^>]+>', '') end
+
+	do --// Text
+		Text.__index = Text
+		function Text.new(options)
+			local self = setmetatable(options, Text)
+			self._originalText = options.originalText or options.text
+
+			self.label = screenGui.Main.logsContainer.logs.label:Clone()
+
+			local text
+			if not options.IsOld then
+				local timeText = DateTime.now():FormatLocalTime('H:mm:ss', 'en-us')
+				self._originalText = ('[%s] <font color="rgb(%s)">[%s] %s</font>'):format(timeText, Types[options.type], options.type, cleantext(self._originalText))
+			end
+			self:SetText(self._originalText)
+
+			table.insert(self._parent.logs, self)
+			table.insert(self._parent.allLogs, {
+				_originalText = self._originalText,
+				_type = self._type,
+			})
+
+			local contentSize = self._parent._layout.AbsoluteContentSize
+			self._parent._logs.CanvasSize = UDim2.fromOffset(0, contentSize.Y)
+
+			if self._parent._Configs.chatLoggerAutoScroll then self._parent._logs.CanvasPosition = Vector2.new(0, contentSize.Y) end
+
+			return self
+		end
+
+		function Text:Destroy()
+			local logs = self._parent.logs
+			table.remove(logs, table.find(logs, self))
+			self.label:Destroy()
+		end
+
+		function Text:SetText(text)
+			self.label.Text = text
+			local textSize = TextService:GetTextSize(self.label.ContentText, 20, Enum.Font.Roboto, Vector2.new(self._parent._logs.AbsoluteSize.X, math.huge))
+			self.label.Size = UDim2.new(1, 0, 0, textSize.Y)
+			self.label.Parent = self._parent._logs
+			self._parent:UpdateCanvas()
+		end
+	end
+
+	function ConsoleLogger.new(params)
+		local self = setmetatable({}, ConsoleLogger)
+		local screenGui = screenGui:Clone()
+		local main = screenGui.Main
+		local title = main.title
+		local dragger = main.dragger
+		local logsContainer = main.logsContainer
+		local logs = logsContainer.logs
+		local layout = logs.UIListLayout
+		local ToggleOutput = logsContainer.ToggleOuterOUTPUT
+		local ToggleAutoScroll = logsContainer.ToggleOuterAutoScroll
+		local ButtonClear = logsContainer.ButtonOuterCLEAR
+
+		self.params = params
+		self._gui = screenGui
+		self.logs = {}
+		self.allLogs = {}
+		self._enabled = false
+		screenGui.Enabled = false
+		main.Visible = false
+		self._main = main
+		self._logs = logs
+		self._layout = layout
+		self._ToggleOutput = ToggleOutput
+		self._ToggleAutoScroll = ToggleAutoScroll
+		self._ButtonClear = ButtonClear
+		self._Configs = Configs
+		self._Version = screenGui:FindFirstChild('Version') and screenGui.Version.Value or '1.0.0'
+
+		for _, v in pairs(self._logs:GetChildren()) do
+			if v:IsA('TextLabel') then v:Destroy() end
+		end
+
+		local dragStart
+		local startPos
+		local dragging
+
+		local function displaytoggle(toggle, Bool)
+			Bool = not not Bool
+
+			toggle.ToggleInner.BackgroundColor3 = Bool and Color3.fromRGB(170, 16, 199) or Color3.fromRGB(34, 28, 34)
+			toggle.ToggleInner.BorderColor3 = Bool and AccentColorDark or Color3.fromRGB(20, 20, 20)
+			writefile('Trap Hub' .. '/console/configs.json', HttpService:JSONEncode(self._Configs))
+		end
+
+		self._ToggleOutput.ToggleRegion.InputBegan:Connect(function(Input)
+			if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+				local value = not self._Configs.OutputRedirect
+				self._Configs.OutputRedirect = value
+				displaytoggle(self._ToggleOutput, value)
+			end
+		end)
+
+		self._ToggleAutoScroll.ToggleRegion.InputBegan:Connect(function(Input)
+			if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+				local value = not self._Configs.chatLoggerAutoScroll
+				self._Configs.chatLoggerAutoScroll = value
+				displaytoggle(self._ToggleAutoScroll, value)
+			end
+		end)
+
+		self._ButtonClear.InputBegan:Connect(function(Input)
+			if Input.UserInputType == Enum.UserInputType.MouseButton1 then self:Clear() end
+		end)
+
+		displaytoggle(self._ToggleOutput, self._Configs.OutputRedirect)
+		displaytoggle(self._ToggleAutoScroll, self._Configs.chatLoggerAutoScroll)
+
+		dragger.InputBegan:Connect(function(inputObject, gpe)
+			if inputObject.UserInputType == Enum.UserInputType.MouseButton1 then
+				local dragStart = inputObject.Position
+				dragStart = Vector2.new(dragStart.X, dragStart.Y)
+
+				local startPos = main.Size
+
+				repeat
+					local mousePosition = UserInputService:GetMouseLocation()
+					local delta = mousePosition - dragStart
+
+					main.Size = UDim2.new(0, startPos.X.Offset + delta.X, 0, (startPos.Y.Offset + delta.Y) - 36)
+
+					task.wait()
+				until inputObject.UserInputState == Enum.UserInputState.End
+
+				self:UpdateCanvas()
+				-- self.OnUpdate:Fire("Size", main.AbsoluteSize)
+			end
+		end)
+
+		title.InputBegan:Connect(function(inputObject, gpe)
+			if inputObject.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+
+			dragging = true
+
+			dragStart = inputObject.Position
+			startPos = main.Position
+
+			repeat
+				task.wait()
+			until inputObject.UserInputState == Enum.UserInputState.End
+
+			-- self.OnUpdate:Fire("Position", main.AbsolutePosition)
+			dragging = false
+
+			self:UpdateCanvas()
+		end)
+
+		UserInputService.InputChanged:Connect(function(input, gpe)
+			if not dragging or input.UserInputType ~= Enum.UserInputType.MouseMovement then return end
+
+			local delta = input.Position - dragStart
+			local yPos = startPos.Y.Offset + delta.Y
+			main:TweenPosition(UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, yPos), 'Out', 'Quint', 0.1, true)
+		end)
+
+		UserInputService.InputBegan:Connect(function(input, gpe)
+			if input.KeyCode == Enum.KeyCode.Insert or input.KeyCode == Enum.KeyCode.KeypadZero then
+				local Bool = not self._enabled
+				self._enabled = Bool
+				self:SetVisible(Bool)
+			end
+		end)
+
+		ProtectGui(screenGui)
+		screenGui.Parent = CoreGui
+		return self
+	end
+
+	function ConsoleLogger:AddText(textData)
+		textData._parent = self
+		local textObject = Text.new(textData)
+
+		return textObject
+	end
+
+	function ConsoleLogger:SetVisible(state)
+		local Bool = not not state
+		self._gui.Enabled = Bool
+		self._main.Visible = Bool
+	end
+
+	function ConsoleLogger:UpdateCanvas()
+		for _, v in next, self.logs do
+			local textSize = TextService:GetTextSize(v.label.ContentText, 20, Enum.Font.Code, Vector2.new(self._logs.AbsoluteSize.X, math.huge))
+			v.label.Size = UDim2.new(1, 0, 0, textSize.Y)
+		end
+
+		local contentSize = self._layout.AbsoluteContentSize
+
+		self._logs.CanvasSize = UDim2.fromOffset(0, contentSize.Y)
+
+		if self._Configs.chatLoggerAutoScroll then self._logs.CanvasPosition = Vector2.new(0, contentSize.Y) end
+	end
+
+	function ConsoleLogger:SetSize(size)
+		self._main.Size = size
+		self:UpdateCanvas()
+	end
+
+	function ConsoleLogger:Clear()
+		for _, v in next, self.logs do
+			v.label:Destroy()
+		end
+
+		self.logs = {}
+		self.allLogs = {}
+		self:UpdateCanvas()
+		if isfile('Trap Hub' .. '/console/logs.json') then delfile('Trap Hub' .. '/console/logs.json') end
+	end
+
+	function ConsoleLogger:SetPosition(position)
+		self._main.Position = position
+		self:UpdateCanvas()
+	end
+end
+
+local Console = ConsoleLogger.new()
+local info = function(...) return ... end
+
+for i, v in pairs(isfile('Trap Hub' .. '/console/logs.json') and HttpService:JSONDecode(readfile('Trap Hub' .. '/console/logs.json')) or {}) do
+	Console:AddText({
+		type = v._type,
+		IsOld = true,
+		text = v._originalText,
+	})
+end
+
+local old
+old = hookfunction(print, function(...)
+	local args = { ... }
+	local text = ''
+
+	for i, v in pairs(args) do
+		text = text .. tostring(v) .. (i == #args and '' or '\t')
+	end
+
+	if not Console._Configs.OutputRedirect then return old(...) end
+
+	Console:AddText({
+		type = 'OUTPUT',
+		text = text,
+	})
+
+	return
+end)
+
+local old
+old = hookfunction(warn, function(...)
+	local args = { ... }
+	local text = ''
+
+	for i, v in pairs(args) do
+		text = text .. tostring(v) .. (i == #args and '' or '\t')
+	end
+
+	Console:AddText({
+		type = 'WARN',
+		text = text,
+	})
+
+	return
+end)
+
+local old
+old = hookfunction(info, function(...)
+	local args = { ... }
+	local text = ''
+
+	for i, v in pairs(args) do
+		text = text .. tostring(v) .. (i == #args and '' or '\t')
+	end
+
+	Console:AddText({
+		type = 'INFO',
+		text = text,
+	})
+
+	return
+end)
+
+local old
+old = hookfunction(error, function(...)
+	local args = { ... }
+	local text = ''
+
+	for i, v in pairs(args) do
+		text = text .. tostring(v) .. (i == #args and '' or '\t')
+	end
+
+	Console:AddText({
+		type = 'ERROR',
+		text = text,
+	})
+
+	return
+end)
+
+local errorcon = ScriptContext.Error:Connect(function(message, trace, script)
+	if script then return end
+
+	local text = ('%s'):format(message)
+	Console:AddText({
+		type = 'ERROR',
+		text = text,
+	})
+end)
+
+GuiService.NativeClose:Connect(function() delfile('Trap Hub' .. '/console/logs.json') end)
+
+Players.PlayerRemoving:connect(function(plr)
+	if plr == player and not Teleporting then delfile('Trap Hub' .. '/console/logs.json') end
+end)
+
+player.OnTeleport:Connect(function(State)
+	if State == Enum.TeleportState.Started or State == Enum.TeleportState.InProgress or State == Enum.TeleportState.RequestedFromServer then
+		Teleporting = true
+		writefile('Trap Hub' .. '/console/logs.json', game:GetService('HttpService'):JSONEncode(Console.allLogs))
+	end
+end)
+
+info(string.format('Console loaded successfully with version %s/%s', Console._Version, '1.0.2'))
