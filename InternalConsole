@@ -2,6 +2,8 @@ repeat
 	wait()
 until game:IsLoaded()
 
+--// Variables
+
 local services
 services = setmetatable({
 	Get = function(self, ...)
@@ -28,20 +30,11 @@ services = setmetatable({
 local workspace, Players, TPS, UserInputService, HttpService, CoreGui, GuiService, TextService, ScriptContext = services:Get('Workspace', 'Players', 'TeleportService', 'UserInputService', 'HttpService', 'CoreGui', 'GuiService', 'TextService', 'ScriptContext')
 local player = Players.LocalPlayer
 
-function BuildFolderTree()
-	local Folder = 'Trap Hub'
-	local paths = {
-		Folder,
-		Folder .. '/console',
-	}
+local coroutine = coroutine
+local create = coroutine.create
+local resume = coroutine.resume
 
-	for i = 1, #paths do
-		local str = paths[i]
-		if not isfolder(str) then makefolder(str) end
-	end
-end
-
-BuildFolderTree()
+local function spawn(f, ...) resume(create(f), ...) end
 
 do --// Console // TextLogger from Aztup but modified to fit my needs
 	ConsoleLogger = {}
@@ -60,7 +53,7 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 	local AccentColorDark = Color3.fromHSV(H, S, V / 1.5)
 
 	local Types = {
-		['WARN'] = [[255,255,0]],
+		['WARN'] = [[255, 255, 50]],
 		['INFO'] = [[50, 180, 255]],
 		['OUTPUT'] = [[230, 230, 230]],
 		['ERROR'] = [[250, 50, 0]],
@@ -104,8 +97,10 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 		end
 
 		function Text:SetText(text)
+			local textwithhour = text:gsub('%[%d%d:%d%d:%d%d%]%s+', '')
 			self.label.Text = text
-			local textSize = TextService:GetTextSize(self.label.ContentText, 20, Enum.Font.Roboto, Vector2.new(self._parent._logs.AbsoluteSize.X, math.huge))
+			local textSize = self._parent.textSizeCache[textwithhour] or TextService:GetTextSize(self.label.ContentText, 20, Enum.Font.Roboto, Vector2.new(self._parent._logs.AbsoluteSize.X, math.huge))
+			self._parent.textSizeCache[textwithhour] = textSize
 			self.label.Size = UDim2.new(1, 0, 0, textSize.Y)
 			self.label.Parent = self._parent._logs
 			self._parent:UpdateCanvas()
@@ -140,6 +135,9 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 		self._ButtonClear = ButtonClear
 		self._Configs = Configs
 		self._Version = screenGui:FindFirstChild('Version') and screenGui.Version.Value or '1.0.0'
+		self.textSizeCache = {}
+		self.textSizeHour = '[00:00:00] '
+		self.textSizeCache[self.textSizeHour] = TextService:GetTextSize(self.textSizeHour, 20, Enum.Font.Code, Vector2.new(self._logs.AbsoluteSize.X, math.huge))
 
 		for _, v in pairs(self._logs:GetChildren()) do
 			if v:IsA('TextLabel') then v:Destroy() end
@@ -235,7 +233,7 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 			end
 		end)
 
-		ProtectGui(screenGui)
+		-- ProtectGui(screenGui)
 		screenGui.Parent = CoreGui
 		return self
 	end
@@ -254,10 +252,18 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 	end
 
 	function ConsoleLogger:UpdateCanvas()
-		for _, v in next, self.logs do
-			local textSize = TextService:GetTextSize(v.label.ContentText, 20, Enum.Font.Code, Vector2.new(self._logs.AbsoluteSize.X, math.huge))
+		--[[
+
+	    local logs = self.logs
+		local logsCount = #logs
+		for i = 1, logsCount do
+			local v = logs[i]
+			local text = v.label.ContentText:gsub('%[%d%d:%d%d:%d%d%]%s+', '')
+			local textSize = self.textSizeCache[text] or TextService:GetTextSize(text, 20, Enum.Font.Code, Vector2.new(self._logs.AbsoluteSize.X, math.huge))
+			self.textSizeCache[text] = textSize
 			v.label.Size = UDim2.new(1, 0, 0, textSize.Y)
 		end
+		]]
 
 		local contentSize = self._layout.AbsoluteContentSize
 
@@ -290,93 +296,142 @@ end
 
 local Console = ConsoleLogger.new()
 local info = function(...) return ... end
+local queue = setmetatable({}, {
+	--[[
+	__newindex = function(self, i, v)
+		rawset(self, i, v)
+		Console:AddText(v)
+	end,
+	]]
+})
+
+local securityContext = getthreadcontext and getthreadcontext() or 6
+function safepcall(func, ...)
+	assert(typeof(func) == 'function', "bad argument to #1 to 'secure_call' (function expected, got " .. typeof(func) .. ')')
+	setthreadcontext(2)
+	local _, res = pcall(func, ...)
+	setthreadcontext(securityContext)
+	return _, res
+end
+
+local function safetostring(arg)
+	local mt = getrawmetatable(arg)
+	local res
+
+	if mt then
+		setreadonly(mt, false)
+
+		local oldfunc = mt.__tostring
+		mt.__tostring = nil
+
+		res = tostring(arg)
+		mt.__tostring = oldfunc
+	else
+		res = tostring(arg)
+	end
+
+	return res
+end
+
+local function BuildFolderTree()
+	local Folder = 'Trap Hub'
+	local paths = {
+		Folder,
+		Folder .. '/console',
+	}
+
+	for i = 1, #paths do
+		local str = paths[i]
+		if not isfolder(str) then makefolder(str) end
+	end
+end
+
+local function logtext(options, ...)
+	local type = options.type
+	local args = options.args
+	options.type = nil
+
+	local n = select('#', ...)
+	local args = { ... }
+	for i = 1, n do
+		args[i] = safetostring(args[i])
+	end
+
+	local text = table.concat(args, '\t')
+	local textargs = {
+		type = type,
+		text = text,
+		unpack(options),
+	}
+
+	xpcall(function() Console:AddText(textargs) end, function(err)
+		setthreadcontext(securityContext)
+		Console:AddText(textargs)
+	end)
+end
+
+BuildFolderTree()
 
 for i, v in pairs(isfile('Trap Hub' .. '/console/logs.json') and HttpService:JSONDecode(readfile('Trap Hub' .. '/console/logs.json')) or {}) do
-	Console:AddText({
+	logtext({
 		type = v._type,
 		IsOld = true,
-		text = v._originalText,
-	})
+	}, v._originalText)
 end
 
 local old
 old = hookfunction(print, function(...)
-	local args = { ... }
-	local text = ''
-
-	for i, v in pairs(args) do
-		text = text .. tostring(v) .. (i == #args and '' or '\t')
-	end
-
 	if not Console._Configs.OutputRedirect then return old(...) end
 
-	Console:AddText({
+	logtext({
 		type = 'OUTPUT',
-		text = text,
-	})
-
-	return
+	}, ...)
 end)
 
 local old
 old = hookfunction(warn, function(...)
-	local args = { ... }
-	local text = ''
+	if not Console._Configs.OutputRedirect then return old(...) end
 
-	for i, v in pairs(args) do
-		text = text .. tostring(v) .. (i == #args and '' or '\t')
-	end
-
-	Console:AddText({
+	logtext({
 		type = 'WARN',
-		text = text,
-	})
-
-	return
+	}, ...)
 end)
 
 local old
 old = hookfunction(info, function(...)
-	local args = { ... }
-	local text = ''
-
-	for i, v in pairs(args) do
-		text = text .. tostring(v) .. (i == #args and '' or '\t')
-	end
-
-	Console:AddText({
+	logtext({
 		type = 'INFO',
-		text = text,
-	})
-
-	return
+	}, ...)
 end)
 
 local old
-old = hookfunction(error, function(...)
-	local args = { ... }
-	local text = ''
+old = hookfunction(error, function(message, level)
+	local trace = debug.traceback()
+	local line = trace:split('\n')[2]:gsub('[^%d]', '')
+	local message = (':%s: %s%s'):format(line, utf8.char(8203), message)
 
-	for i, v in pairs(args) do
-		text = text .. tostring(v) .. (i == #args and '' or '\t')
-	end
-
-	Console:AddText({
+	logtext({
 		type = 'ERROR',
-		text = text,
-	})
-
-	return
+	}, message)
 end)
 
-local errorcon = ScriptContext.Error:Connect(function(message, trace, script)
+game:GetService('ScriptContext').ErrorDetailed:Connect(function(message, stackTrace, script, details, securityLevel)
+	--[[
+	table.foreach({
+		message = message,
+		stackTrace = stackTrace,
+		script = script,
+		details = details,
+		securityLevel = securityLevel,
+	}, print)
+	]]
+
 	if script then return end
 
-	local text = ('%s'):format(message)
-	Console:AddText({
+	local text = ('%s%s%s'):format(message:sub(1, 1), utf8.char(8203), message:sub(2))
+	logtext({
 		type = 'ERROR',
-		text = text,
-	})
+	}, text)
 end)
 
 GuiService.NativeClose:Connect(function() delfile('Trap Hub' .. '/console/logs.json') end)
@@ -392,4 +447,4 @@ player.OnTeleport:Connect(function(State)
 	end
 end)
 
-info(string.format('Console loaded successfully with version %s/%s', Console._Version, '1.0.2'))
+info(string.format('Console loaded successfully with version %s/%s', Console._Version, '1.0.5'))
