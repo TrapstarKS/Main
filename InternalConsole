@@ -415,7 +415,7 @@ old = hookfunction(error, function(message, level)
 	}, message)
 end)
 
-ScriptContext.Error:Connect(function(message, stackTrace, script, details, securityLevel)
+getgenv().TrapHubConsoleConnection = ScriptContext.ErrorDetailed:Connect(function(message, stackTrace, script, details, securityLevel)
 	--[[
 	table.foreach({
 		message = message,
@@ -447,4 +447,4 @@ player.OnTeleport:Connect(function(State)
 	end
 end)
 
-info(string.format('Console loaded successfully with version %s/%s', Console._Version, '1.0.6'))
+info(string.format('Console loaded successfully with version %s/%s', Console._Version, '1.0.7'))
