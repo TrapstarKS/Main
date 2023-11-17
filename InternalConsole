@@ -448,4 +448,4 @@ spawn(function()
 	end
 end)
 
-info(string.format('Console loaded successfully with version %s/%s', Console._Version, '1.1.1'))
+info(string.format('Console loaded successfully with version %s/%s', Console._Version, '1.1.2'))
