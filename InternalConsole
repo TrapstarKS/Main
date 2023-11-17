@@ -136,8 +136,6 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 		self._Configs = Configs
 		self._Version = screenGui:FindFirstChild('Version') and screenGui.Version.Value or '1.0.0'
 		self.textSizeCache = {}
-		self.textSizeHour = '[00:00:00] '
-		self.textSizeCache[self.textSizeHour] = TextService:GetTextSize(self.textSizeHour, 20, Enum.Font.Code, Vector2.new(self._logs.AbsoluteSize.X, math.huge))
 
 		for _, v in pairs(self._logs:GetChildren()) do
 			if v:IsA('TextLabel') then v:Destroy() end
@@ -233,7 +231,7 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 			end
 		end)
 
-		-- ProtectGui(screenGui)
+		ProtectGui(screenGui)
 		screenGui.Parent = CoreGui
 		return self
 	end
@@ -306,13 +304,6 @@ local queue = setmetatable({}, {
 })
 
 local securityContext = getthreadcontext and getthreadcontext() or 6
-function safepcall(func, ...)
-	assert(typeof(func) == 'function', "bad argument to #1 to 'secure_call' (function expected, got " .. typeof(func) .. ')')
-	setthreadcontext(2)
-	local _, res = pcall(func, ...)
-	setthreadcontext(securityContext)
-	return _, res
-end
 
 local function safetostring(arg)
 	local mt = getrawmetatable(arg)
@@ -354,7 +345,7 @@ local function logtext(options, ...)
 	local n = select('#', ...)
 	local args = { ... }
 	for i = 1, n do
-		args[i] = safetostring(args[i])
+		args[i] = tostring(args[i])
 	end
 
 	local text = table.concat(args, '\t')
