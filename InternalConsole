@@ -372,7 +372,7 @@ end
 
 local old
 old = hookfunction(print, function(...)
-	if not Console._Configs.OutputRedirect then return old(...) end
+	if not Console._Configs.OutputRedirect or not checkcaller() then return old(...) end
 
 	logtext({
 		type = 'OUTPUT',
@@ -381,7 +381,7 @@ end)
 
 local old
 old = hookfunction(warn, function(...)
-	if not Console._Configs.OutputRedirect then return old(...) end
+	if not Console._Configs.OutputRedirect or not checkcaller() then return old(...) end
 
 	logtext({
 		type = 'WARN',
@@ -397,6 +397,7 @@ end)
 
 local old
 old = hookfunction(error, function(message, level)
+	if not checkcaller() then return old(message, level) end
 	local trace = debug.traceback()
 	local line = trace:split('\n')[2]:gsub('[^%d]', '')
 	local message = (':%s: %s%s'):format(line, utf8.char(8203), message)
@@ -448,4 +449,4 @@ spawn(function()
 	end
 end)
 
-info(string.format('Console loaded successfully with version %s/%s', Console._Version, '1.1.2'))
+info(string.format('Console loaded successfully with version %s/%s', Console._Version, '1.1.3'))
