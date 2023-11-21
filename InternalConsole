@@ -324,7 +324,7 @@ local function safetostring(arg)
 	return res
 end
 
-local function BuildFolderTree()
+(function()
 	local Folder = 'Trap Hub'
 	local paths = {
 		Folder,
@@ -335,7 +335,7 @@ local function BuildFolderTree()
 		local str = paths[i]
 		if not isfolder(str) then makefolder(str) end
 	end
-end
+end)()
 
 local function logtext(options, ...)
 	local type = options.type
@@ -360,8 +360,6 @@ local function logtext(options, ...)
 		Console:AddText(textargs)
 	end)
 end
-
-BuildFolderTree()
 
 for i, v in pairs(isfile('Trap Hub' .. '/console/logs.json') and HttpService:JSONDecode(readfile('Trap Hub' .. '/console/logs.json')) or {}) do
 	logtext({
@@ -407,27 +405,29 @@ old = hookfunction(error, function(message, level)
 	}, message)
 end)
 
-local NameConsole = 'TrapHubConsoleConnection' .. math.random(1, 1000000000)
-local function ConnectErrorDetailed()
-	getgenv()[NameConsole] = ScriptContext.ErrorDetailed:Connect(function(message, stackTrace, script, details, securityLevel)
-		--[[
-	table.foreach({
-		message = message,
-		stackTrace = stackTrace,
-		script = script,
-		details = details,
-		securityLevel = securityLevel,
-	}, print)
-	]]
+local func = function(message, stackTrace, script, details, securityLevel)
+	if script then return end
 
-		if script then return end
-
-		local text = ('%s%s%s\n%s'):format(message:sub(1, 1), utf8.char(8203), message:sub(2), stackTrace)
-		logtext({
-			type = 'ERROR',
-		}, text)
-	end)
+	local text = ('%s%s%s\n%s'):format(message:sub(1, 1), utf8.char(8203), message:sub(2), stackTrace)
+	logtext({
+		type = 'ERROR',
+	}, text)
 end
+
+local old
+old = hookfunction(getconnections, function(connect, ...)
+	if connect ~= ScriptContext.ErrorDetailed then return old(connect, ...) end
+	local connections = old(connect, ...)
+	for _, v in next, connections do
+		if v.Function and v.Function == func then
+			warn('Detected a connection to ScriptContext.ErrorDetailed (Console Connection), removing it')
+			table.remove(connections, _)
+		end
+	end
+	return connections
+end)
+
+ScriptContext.ErrorDetailed:Connect(func)
 
 GuiService.NativeClose:Connect(function() delfile('Trap Hub' .. '/console/logs.json') end)
 
@@ -442,11 +442,5 @@ player.OnTeleport:Connect(function(State)
 	end
 end)
 
-spawn(function()
-	while true do
-		if not getgenv()[NameConsole] or getgenv()[NameConsole].Connected == false then ConnectErrorDetailed() end
-		wait(1)
-	end
-end)
-
-info(string.format('Console loaded successfully with version %s/%s', Console._Version, '1.1.4'))
+info(string.format('Console loaded successfully with version %s/%s', Console._Version, '1.1.5'))
+getconnections(ScriptContext.ErrorDetailed)
