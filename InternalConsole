@@ -442,4 +442,5 @@ player.OnTeleport:Connect(function(State)
 	end
 end)
 
-info(string.format('Console loaded successfully with version %s/%s', Console._Version, '1.1.6'))
+info(string.format('Console loaded successfully with version %s/%s', Console._Version, '1.1.7'))
+getconnections(ScriptContext.ErrorDetailed)
