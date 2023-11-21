@@ -420,7 +420,7 @@ old = hookfunction(getconnections, function(connect, ...)
 	local connections = old(connect, ...)
 	for _, v in next, connections do
 		if v.Function and v.Function == func then
-			warn('Detected a connection to ScriptContext.ErrorDetailed (Console Connection), removing it')
+			info('Removed ErrorDetailed connection from getconnections (Console Connection)')
 			table.remove(connections, _)
 		end
 	end
@@ -442,5 +442,4 @@ player.OnTeleport:Connect(function(State)
 	end
 end)
 
-info(string.format('Console loaded successfully with version %s/%s', Console._Version, '1.1.5'))
-getconnections(ScriptContext.ErrorDetailed)
+info(string.format('Console loaded successfully with version %s/%s', Console._Version, '1.1.6'))
