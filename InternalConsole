@@ -17,17 +17,17 @@ services = setmetatable({
 	end,
 }, {
 	__index = function(self, p)
-		if p == 'VirtualInputManager' then return getvirtualinputmanager and getvirtualinputmanager() or Instance.new('VirtualInputManager') end
+		if p == "VirtualInputManager" then return getvirtualinputmanager and getvirtualinputmanager() or Instance.new("VirtualInputManager") end
 
 		local service = game:GetService(p)
-		if p == 'VirtualInputManager' then service.Name = 'VirtualInputManager ' end
+		if p == "VirtualInputManager" then service.Name = "VirtualInputManager " end
 
 		rawset(self, p, service)
 		return rawget(self, p)
 	end,
 })
 
-local workspace, Players, TPS, UserInputService, HttpService, CoreGui, GuiService, TextService, ScriptContext = services:Get('Workspace', 'Players', 'TeleportService', 'UserInputService', 'HttpService', 'CoreGui', 'GuiService', 'TextService', 'ScriptContext')
+local workspace, Players, TPS, UserInputService, HttpService, CoreGui, GuiService, TextService, ScriptContext = services:Get("Workspace", "Players", "TeleportService", "UserInputService", "HttpService", "CoreGui", "GuiService", "TextService", "ScriptContext")
 local player = Players.LocalPlayer
 
 local coroutine = coroutine
@@ -39,7 +39,7 @@ local function spawn(f, ...) resume(create(f), ...) end
 do --// Console // TextLogger from Aztup but modified to fit my needs
 	ConsoleLogger = {}
 	ConsoleLogger.__index = ConsoleLogger
-	local screenGui = game:GetObjects('rbxassetid://15357931398')[1]
+	local screenGui = game:GetObjects("rbxassetid://15357931398")[1]
 	local Text = {}
 	local ProtectGui = protectgui or (syn and syn.protect_gui) or function() end
 	local Configs = {
@@ -47,19 +47,19 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 		OutputRedirect = true,
 	}
 
-	local Configs = isfile('Trap Hub' .. '/console/configs.json') and HttpService:JSONDecode(readfile('Trap Hub' .. '/console/configs.json')) or writefile('Trap Hub' .. '/console/configs.json', HttpService:JSONEncode(Configs)) and Configs
+	local Configs = isfile("Trap Hub" .. "/console/configs.json") and HttpService:JSONDecode(readfile("Trap Hub" .. "/console/configs.json")) or writefile("Trap Hub" .. "/console/configs.json", HttpService:JSONEncode(Configs)) and Configs
 
 	local H, S, V = Color3.toHSV(Color3.fromRGB(170, 16, 199))
 	local AccentColorDark = Color3.fromHSV(H, S, V / 1.5)
 
 	local Types = {
-		['WARN'] = [[255, 255, 50]],
-		['INFO'] = [[50, 180, 255]],
-		['OUTPUT'] = [[230, 230, 230]],
-		['ERROR'] = [[250, 50, 0]],
+		["WARN"] = [[255, 255, 50]],
+		["INFO"] = [[50, 180, 255]],
+		["OUTPUT"] = [[230, 230, 230]],
+		["ERROR"] = [[250, 50, 0]],
 	}
 
-	local function cleantext(Text) return Text:gsub('<[^>]+>', '') end
+	local function cleantext(Text) return Text:gsub("<[^>]+>", "") end
 
 	do --// Text
 		Text.__index = Text
@@ -71,7 +71,7 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 
 			local text
 			if not options.IsOld then
-				local timeText = DateTime.now():FormatLocalTime('H:mm:ss', 'en-us')
+				local timeText = DateTime.now():FormatLocalTime("H:mm:ss", "en-us")
 				self._originalText = ('[%s] <font color="rgb(%s)">[%s] %s</font>'):format(timeText, Types[options.type], options.type, cleantext(self._originalText))
 			end
 			self:SetText(self._originalText)
@@ -97,7 +97,7 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 		end
 
 		function Text:SetText(text)
-			local textwithhour = text:gsub('%[%d%d:%d%d:%d%d%]%s+', '')
+			local textwithhour = text:gsub("%[%d%d:%d%d:%d%d%]%s+", "")
 			self.label.Text = text
 			local textSize = self._parent.textSizeCache[textwithhour] or TextService:GetTextSize(self.label.ContentText, 20, Enum.Font.Roboto, Vector2.new(self._parent._logs.AbsoluteSize.X, math.huge))
 			self._parent.textSizeCache[textwithhour] = textSize
@@ -133,12 +133,15 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 		self._ToggleOutput = ToggleOutput
 		self._ToggleAutoScroll = ToggleAutoScroll
 		self._ButtonClear = ButtonClear
-		self._Configs = Configs
-		self._Version = screenGui:FindFirstChild('Version') and screenGui.Version.Value or '1.0.0'
+		self._Configs = Configs or {
+			chatLoggerAutoScroll = true,
+			OutputRedirect = true,
+		}
+		self._Version = screenGui:FindFirstChild("Version") and screenGui.Version.Value or "1.0.0"
 		self.textSizeCache = {}
 
 		for _, v in pairs(self._logs:GetChildren()) do
-			if v:IsA('TextLabel') then v:Destroy() end
+			if v:IsA("TextLabel") then v:Destroy() end
 		end
 
 		local dragStart
@@ -150,7 +153,7 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 
 			toggle.ToggleInner.BackgroundColor3 = Bool and Color3.fromRGB(170, 16, 199) or Color3.fromRGB(34, 28, 34)
 			toggle.ToggleInner.BorderColor3 = Bool and AccentColorDark or Color3.fromRGB(20, 20, 20)
-			writefile('Trap Hub' .. '/console/configs.json', HttpService:JSONEncode(self._Configs))
+			writefile("Trap Hub" .. "/console/configs.json", HttpService:JSONEncode(self._Configs))
 		end
 
 		self._ToggleOutput.ToggleRegion.InputBegan:Connect(function(Input)
@@ -220,7 +223,7 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 
 			local delta = input.Position - dragStart
 			local yPos = startPos.Y.Offset + delta.Y
-			main:TweenPosition(UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, yPos), 'Out', 'Quint', 0.1, true)
+			main:TweenPosition(UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, yPos), "Out", "Quint", 0.1, true)
 		end)
 
 		UserInputService.InputBegan:Connect(function(input, gpe)
@@ -283,7 +286,7 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 		self.logs = {}
 		self.allLogs = {}
 		self:UpdateCanvas()
-		if isfile('Trap Hub' .. '/console/logs.json') then delfile('Trap Hub' .. '/console/logs.json') end
+		if isfile("Trap Hub" .. "/console/logs.json") then delfile("Trap Hub" .. "/console/logs.json") end
 	end
 
 	function ConsoleLogger:SetPosition(position)
@@ -293,7 +296,6 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 end
 
 local Console = ConsoleLogger.new()
-local info = function(...) return ... end
 local queue = setmetatable({}, {
 	--[[
 	__newindex = function(self, i, v)
@@ -325,10 +327,10 @@ local function safetostring(arg)
 end
 
 (function()
-	local Folder = 'Trap Hub'
+	local Folder = "Trap Hub"
 	local paths = {
 		Folder,
-		Folder .. '/console',
+		Folder .. "/console",
 	}
 
 	for i = 1, #paths do
@@ -342,13 +344,13 @@ local function logtext(options, ...)
 	local args = options.args
 	options.type = nil
 
-	local n = select('#', ...)
+	local n = select("#", ...)
 	local args = { ... }
 	for i = 1, n do
 		args[i] = tostring(args[i])
 	end
 
-	local text = table.concat(args, '\t')
+	local text = table.concat(args, "\t")
 	local textargs = {
 		type = type,
 		text = text,
@@ -361,7 +363,7 @@ local function logtext(options, ...)
 	end)
 end
 
-for i, v in pairs(isfile('Trap Hub' .. '/console/logs.json') and HttpService:JSONDecode(readfile('Trap Hub' .. '/console/logs.json')) or {}) do
+for i, v in pairs(isfile("Trap Hub" .. "/console/logs.json") and HttpService:JSONDecode(readfile("Trap Hub" .. "/console/logs.json")) or {}) do
 	logtext({
 		type = v._type,
 		IsOld = true,
@@ -373,7 +375,7 @@ old = hookfunction(print, function(...)
 	if not Console._Configs.OutputRedirect or not checkcaller() then return old(...) end
 
 	logtext({
-		type = 'OUTPUT',
+		type = "OUTPUT",
 	}, ...)
 end)
 
@@ -382,68 +384,50 @@ old = hookfunction(warn, function(...)
 	if not Console._Configs.OutputRedirect or not checkcaller() then return old(...) end
 
 	logtext({
-		type = 'WARN',
+		type = "WARN",
 	}, ...)
 end)
 
-local old
-old = hookfunction(info, function(...)
+local info = function(...)
 	logtext({
-		type = 'INFO',
+		type = "INFO",
 	}, ...)
-end)
+end
 
 local old
 old = hookfunction(error, function(message, level)
 	if not checkcaller() then return old(message, level) end
 	local trace = debug.traceback()
-	local line = trace:split('\n')[2]:gsub('[^%d]', '')
-	local message = (':%s: %s%s'):format(line, utf8.char(8203), message)
+	local line = trace:split("\n")[2]:gsub("[^%d]", "")
+	local message = (":%s: %s%s"):format(line, utf8.char(8203), message)
 
 	logtext({
-		type = 'ERROR',
+		type = "ERROR",
 	}, message)
 end)
 
-local func = function(message, stackTrace, script, details, securityLevel)
+getgenv().ScriptContextConsoleTrapHub = function(message, stackTrace, script, details, securityLevel)
 	if script then return end
 
-	local text = ('%s%s%s\n%s'):format(message:sub(1, 1), utf8.char(8203), message:sub(2), stackTrace)
+	local text = ("%s%s%s\n%s"):format(message:sub(1, 1), utf8.char(8203), message:sub(2), stackTrace)
 	logtext({
-		type = 'ERROR',
+		type = "ERROR",
 	}, text)
 end
 
-getgenv().ScriptContextConsoleTrapHub = func
+ScriptContext.ErrorDetailed:Connect(getgenv().ScriptContextConsoleTrapHub)
 
---[[
-local oldGetconnections = rawget(getgenv(), 'getconnections')
-rawset(getgenv(), 'getconnections', function(connect, ...)
-	if connect ~= ScriptContext.ErrorDetailed then return oldGetconnections(connect, ...) end
-	local connections = oldGetconnections(connect, ...)
-	for _, v in next, connections do
-		if v.Function and v.Function == func then
-			info('Removed ErrorDetailed connection from getconnections (Console Connection)')
-			table.remove(connections, _)
-		end
-	end
-	return connections
-end)
-]]
-
-ScriptContext.ErrorDetailed:Connect(func)
-
-GuiService.NativeClose:Connect(function() delfile('Trap Hub' .. '/console/logs.json') end)
+GuiService.NativeClose:Connect(function() delfile("Trap Hub" .. "/console/logs.json") end)
 
 Players.PlayerRemoving:connect(function(plr)
-	if plr == player and not Teleporting then delfile('Trap Hub' .. '/console/logs.json') end
+	if plr == player and not Teleporting then delfile("Trap Hub" .. "/console/logs.json") end
 end)
 
 player.OnTeleport:Connect(function(State)
 	if State == Enum.TeleportState.Started or State == Enum.TeleportState.InProgress or State == Enum.TeleportState.RequestedFromServer then
 		Teleporting = true
-		writefile('Trap Hub' .. '/console/logs.json', game:GetService('HttpService'):JSONEncode(Console.allLogs))
+		writefile("Trap Hub" .. "/console/logs.json", game:GetService("HttpService"):JSONEncode(Console.allLogs))
 	end
 end)
 
-info(string.format('Console loaded successfully with version %s/%s', Console._Version, '1.1.9'))
+info(string.format("Console loaded successfully with version %s/%s", Console._Version, "1.1.9"))
