@@ -404,6 +404,8 @@ old = hookfunction(error, function(message, level)
 	logtext({
 		type = "ERROR",
 	}, message)
+
+	return old(message, level)
 end)
 
 getgenv().ScriptContextConsoleTrapHub = function(message, stackTrace, script, details, securityLevel)
@@ -430,4 +432,4 @@ player.OnTeleport:Connect(function(State)
 	end
 end)
 
-info(string.format("Console loaded successfully with version %s/%s", Console._Version, "1.1.9"))
+info(string.format("Console loaded successfully with version %s/%s", Console._Version, "1.2.0"))
