@@ -1,54 +1,34 @@
 local repo = "https://raw.githubusercontent.com/TrapstarKSSKSKSKKS/Main/main/"
-local function LoadScript(ScriptName)
-	pcall(function()
-		t = 0
-		repeat
-			local s, r = pcall(function()
-				loadstring(game:HttpGet(repo .. ScriptName))()
-			end)
-			if not s then
-				spawn(function()
-					error(r)
-				end)
-			end
-			t = t + 1
-			wait(60)
-		until getgenv().Executed or t >= 30
-	end)
-end
 local Id = game.PlaceId
 local GameId = game.GameId
-local PlaceIds = {
-	["AA"] = { 3183403065 },
-	["RG"] = { 914010731 },
-	["BF"] = { 2753915549, 4442272183, 7449423635 },
-	["PJS"] = { 2142948266 },
-        ["AFS"] = {6299805723, 9141645420},
-	['AFSX'] = {4099570905},
-	['PEROXIDE'] = {3419284255},
+
+local Games = {
+	["AA"] = {
+		FileName = getgenv().BetaScript and "AnimeAdventures-Rewrite" or "Anime%20Adventures",
+		PlaceId = { 3183403065 },
+		GameName = "Anime Adventures",
+	},
+	["RoGhoul"] = {
+		FileName = "RoGhoul",
+		PlaceId = { 380704901 },
+		GameName = "RoGhoul",
+	},
+	["Blade Ball"] = {
+		FileName = "BladeBall",
+		PlaceId = { 13772394625 },
+		GameName = "Blade Ball",
+	},
 }
-if table.find(PlaceIds["AA"], GameId) then -- Anime Adventures
-	if getgenv().BetaScript then
-        LoadScript("AnimeAdventures-Rewrite.lua")
-	else
-	LoadScript("Anime%20Adventures.lua")
+
+local function LoadScript(name)
+	local data = Games[name]
+	getgenv().GameName = data.GameName
+
+	loadstring(game:HttpGet(repo .. data.FileName .. ".lua"))()
+end
+
+for _, data in next, Games do
+	for _, v in next, data.PlaceId do
+		if Id == v or GameId == v then LoadScript(data.FileName) end
 	end
-elseif table.find(PlaceIds["RG"], Id) then -- RoGhoul
-	LoadScript("RoGhoul.lua")
-elseif table.find(PlaceIds["BF"], Id) then -- Blox Fruits
-	LoadScript("BloxFruits.lua")
-elseif table.find(PlaceIds["PJS"], GameId) then -- Project Slayer
-	LoadScript("PJS.lua")
-elseif table.find(PlaceIds["AFS"], Id) then -- Afs
-	if getgenv().BetaScript then
-	LoadScript("beta-afs.lua")
-	else
-	LoadScript("afsdupe.lua")
-	end
-elseif table.find(PlaceIds['PEROXIDE'], GameId) then -- AFSX
-	LoadScript("Peroxide.lua")
-elseif table.find(PlaceIds['AFSX'], GameId) then -- AFSX
-	LoadScript("AFSX.lua")
-else -- Astd
-	LoadScript("Astd.lua")
 end
