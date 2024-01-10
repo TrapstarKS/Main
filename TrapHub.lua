@@ -15,7 +15,7 @@ local Games = {
 	},
 	["Blade Ball"] = {
 		FileName = "BladeBall",
-		PlaceId = { 13772394625 },
+		PlaceId = { 4777817887 },
 		GameName = "Blade Ball",
 	},
 }
