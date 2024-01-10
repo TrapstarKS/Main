@@ -27,8 +27,8 @@ local function LoadScript(name)
 	loadstring(game:HttpGet(repo .. data.FileName .. ".lua"))()
 end
 
-for _, data in next, Games do
+for name, data in next, Games do
 	for _, v in next, data.PlaceId do
-		if Id == v or GameId == v then LoadScript(data.FileName) end
+		if Id == v or GameId == v then LoadScript(name) end
 	end
 end
