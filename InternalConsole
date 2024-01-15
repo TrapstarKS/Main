@@ -360,6 +360,7 @@ local function logtext(options, ...)
 	xpcall(function() Console:AddText(textargs) end, function(err)
 		setthreadcontext(securityContext)
 		Console:AddText(textargs)
+		setthreadcontext(8)
 	end)
 end
 
@@ -432,4 +433,4 @@ player.OnTeleport:Connect(function(State)
 	end
 end)
 
-info(string.format("Console loaded successfully with version %s/%s", Console._Version, "1.2.0"))
+info(string.format("Console loaded successfully with version %s/%s", Console._Version, "1.2.1"))
