@@ -18,6 +18,11 @@ local Games = {
 		PlaceId = { 4777817887 },
 		GameName = "Blade Ball",
 	},
+	["ASX"] = {
+		FileName = "AnimeSouls",
+		PlaceId = { 5300677688 },
+		GameName = "Anime Souls Simulator X",  
+        },
 }
 
 local function LoadScript(name)
