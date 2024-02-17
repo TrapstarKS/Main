@@ -36,6 +36,19 @@ local resume = coroutine.resume
 
 local function spawn(f, ...) resume(create(f), ...) end
 
+(function()
+	local Folder = "Trap Hub"
+	local paths = {
+		Folder,
+		Folder .. "/console",
+	}
+
+	for i = 1, #paths do
+		local str = paths[i]
+		if not isfolder(str) then makefolder(str) end
+	end
+end)()
+
 do --// Console // TextLogger from Aztup but modified to fit my needs
 	ConsoleLogger = {}
 	ConsoleLogger.__index = ConsoleLogger
