@@ -492,7 +492,7 @@ old = hookfunction(error, function(message, level)
 end)
 
 getgenv().ScriptContextConsoleTrapHub = function(message, stackTrace, script, details, securityLevel)
-	if script then
+	if script and not checkcaller() then
 		return
 	end
 
