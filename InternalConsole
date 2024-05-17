@@ -17,42 +17,24 @@ services = setmetatable({
 	end,
 }, {
 	__index = function(self, p)
-		if p == "VirtualInputManager" then
-			return getvirtualinputmanager and getvirtualinputmanager() or Instance.new("VirtualInputManager")
-		end
+		if p == "VirtualInputManager" then return getvirtualinputmanager and getvirtualinputmanager() or Instance.new("VirtualInputManager") end
 
 		local service = game:GetService(p)
-		if p == "VirtualInputManager" then
-			service.Name = "VirtualInputManager "
-		end
+		if p == "VirtualInputManager" then service.Name = "VirtualInputManager " end
 
 		rawset(self, p, service)
 		return rawget(self, p)
 	end,
 })
 
-local workspace, Players, TPS, UserInputService, HttpService, CoreGui, GuiService, TextService, ScriptContext, MemStorageService =
-	services:Get(
-		"Workspace",
-		"Players",
-		"TeleportService",
-		"UserInputService",
-		"HttpService",
-		"CoreGui",
-		"GuiService",
-		"TextService",
-		"ScriptContext",
-		"MemStorageService"
-	)
+local workspace, Players, TPS, UserInputService, HttpService, CoreGui, GuiService, TextService, ScriptContext, MemStorageService = services:Get("Workspace", "Players", "TeleportService", "UserInputService", "HttpService", "CoreGui", "GuiService", "TextService", "ScriptContext", "MemStorageService")
 local player = Players.LocalPlayer
 
 local coroutine = coroutine
 local create = coroutine.create
 local resume = coroutine.resume
 
-local function spawn(f, ...)
-	resume(create(f), ...)
-end
+local function spawn(f, ...) resume(create(f), ...) end
 
 do --// Console // TextLogger from Aztup but modified to fit my needs
 	ConsoleLogger = {}
@@ -65,9 +47,7 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 		OutputRedirect = true,
 	}
 
-	local Configs = isfile("Trap Hub" .. "/console/configs.json")
-			and HttpService:JSONDecode(readfile("Trap Hub" .. "/console/configs.json"))
-		or writefile("Trap Hub" .. "/console/configs.json", HttpService:JSONEncode(Configs)) and Configs
+	local Configs = isfile("Trap Hub" .. "/console/configs.json") and HttpService:JSONDecode(readfile("Trap Hub" .. "/console/configs.json")) or writefile("Trap Hub" .. "/console/configs.json", HttpService:JSONEncode(Configs)) and Configs
 
 	local H, S, V = Color3.toHSV(Color3.fromRGB(170, 16, 199))
 	local AccentColorDark = Color3.fromHSV(H, S, V / 1.5)
@@ -79,9 +59,7 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 		["ERROR"] = [[250, 50, 0]],
 	}
 
-	local function cleantext(Text)
-		return Text:gsub("<[^>]+>", "")
-	end
+	local function cleantext(Text) return Text:gsub("<[^>]+>", "") end
 
 	do --// Text
 		Text.__index = Text
@@ -96,12 +74,7 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 			local text
 			if not IsOld then
 				local timeText = DateTime.now():FormatLocalTime("H:mm:ss", "en-us")
-				self._originalText = ('[%s] <font color="rgb(%s)">[%s] %s</font>'):format(
-					timeText,
-					Types[options.type],
-					options.type,
-					cleantext(self._originalText)
-				)
+				self._originalText = ('[%s] <font color="rgb(%s)">[%s] %s</font>'):format(timeText, Types[options.type], options.type, cleantext(self._originalText))
 			end
 			self:SetText(self._originalText)
 
@@ -114,32 +87,27 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 			local contentSize = self._parent._layout.AbsoluteContentSize
 			self._parent._logs.CanvasSize = UDim2.fromOffset(0, contentSize.Y)
 
-			if self._parent._Configs.chatLoggerAutoScroll then
-				self._parent._logs.CanvasPosition = Vector2.new(0, contentSize.Y)
-			end
+			if self._parent._Configs.chatLoggerAutoScroll then self._parent._logs.CanvasPosition = Vector2.new(0, contentSize.Y) end
 
 			return self
 		end
 
 		function Text:Destroy()
 			local logs = self._parent.logs
-			table.remove(logs, table.find(logs, self))
-			self.label:Destroy()
+			self.Delete()
+			local index = table.find(logs, self)
+			if index then table.remove(logs, index) end
 		end
 
 		function Text:SetText(text)
 			local textwithhour = text:gsub("%[%d%d:%d%d:%d%d%]%s+", "")
 			self.label.Text = text
-			local textSize = self._parent.textSizeCache[textwithhour]
-				or TextService:GetTextSize(
-					self.label.ContentText,
-					20,
-					Enum.Font.Roboto,
-					Vector2.new(self._parent._logs.AbsoluteSize.X, math.huge)
-				)
+			local textSize = self._parent.textSizeCache[textwithhour] or TextService:GetTextSize(self.label.ContentText, 20, Enum.Font.Roboto, Vector2.new(self._parent._logs.AbsoluteSize.X, math.huge))
 			self._parent.textSizeCache[textwithhour] = textSize
 			self.label.Size = UDim2.new(1, 0, 0, textSize.Y)
 			self.label.Parent = self._parent._logs
+			local label = self.label
+			self.Delete = function() label:Destroy() end
 			self._parent:UpdateCanvas()
 		end
 	end
@@ -178,9 +146,7 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 		self.textSizeCache = {}
 
 		for _, v in pairs(self._logs:GetChildren()) do
-			if v:IsA("TextLabel") then
-				v:Destroy()
-			end
+			if v:IsA("TextLabel") then v:Destroy() end
 		end
 
 		local dragStart
@@ -212,9 +178,7 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 		end)
 
 		self._ButtonClear.InputBegan:Connect(function(Input)
-			if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-				self:Clear()
-			end
+			if Input.UserInputType == Enum.UserInputType.MouseButton1 then self:Clear() end
 		end)
 
 		displaytoggle(self._ToggleOutput, self._Configs.OutputRedirect)
@@ -242,9 +206,7 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 		end)
 
 		title.InputBegan:Connect(function(inputObject, gpe)
-			if inputObject.UserInputType ~= Enum.UserInputType.MouseButton1 then
-				return
-			end
+			if inputObject.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
 
 			dragging = true
 
@@ -262,19 +224,11 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 		end)
 
 		UserInputService.InputChanged:Connect(function(input, gpe)
-			if not dragging or input.UserInputType ~= Enum.UserInputType.MouseMovement then
-				return
-			end
+			if not dragging or input.UserInputType ~= Enum.UserInputType.MouseMovement then return end
 
 			local delta = input.Position - dragStart
 			local yPos = startPos.Y.Offset + delta.Y
-			main:TweenPosition(
-				UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, yPos),
-				"Out",
-				"Quint",
-				0.1,
-				true
-			)
+			main:TweenPosition(UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, yPos), "Out", "Quint", 0.1, true)
 		end)
 
 		UserInputService.InputBegan:Connect(function(input, gpe)
@@ -294,6 +248,12 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 		textData._parent = self
 		local textObject = Text.new(textData)
 
+		while #self.logs > 100 do
+			local oldestLog = table.remove(self.logs, 1)
+			oldestLog:Destroy()
+			self:UpdateCanvas()
+		end
+
 		return textObject
 	end
 
@@ -304,26 +264,11 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 	end
 
 	function ConsoleLogger:UpdateCanvas()
-		--[[
-
-	    local logs = self.logs
-		local logsCount = #logs
-		for i = 1, logsCount do
-			local v = logs[i]
-			local text = v.label.ContentText:gsub('%[%d%d:%d%d:%d%d%]%s+', '')
-			local textSize = self.textSizeCache[text] or TextService:GetTextSize(text, 20, Enum.Font.Code, Vector2.new(self._logs.AbsoluteSize.X, math.huge))
-			self.textSizeCache[text] = textSize
-			v.label.Size = UDim2.new(1, 0, 0, textSize.Y)
-		end
-		]]
-
 		local contentSize = self._layout.AbsoluteContentSize
 
 		self._logs.CanvasSize = UDim2.fromOffset(0, contentSize.Y)
 
-		if self._Configs.chatLoggerAutoScroll then
-			self._logs.CanvasPosition = Vector2.new(0, contentSize.Y)
-		end
+		if self._Configs.chatLoggerAutoScroll then self._logs.CanvasPosition = Vector2.new(0, contentSize.Y) end
 	end
 
 	function ConsoleLogger:SetSize(size)
@@ -332,16 +277,14 @@ do --// Console // TextLogger from Aztup but modified to fit my needs
 	end
 
 	function ConsoleLogger:Clear()
-		for _, v in next, self.logs do
-			v.label:Destroy()
+		for _, v in pairs(self._logs:GetChildren()) do
+			if v:IsA("TextLabel") then v:Destroy() end
 		end
 
 		self.logs = {}
 		self.allLogs = {}
 		self:UpdateCanvas()
-		if MemStorageService:HasItem("ConsoleLogs") then
-			MemStorageService:RemoveItem("ConsoleLogs")
-		end
+		if MemStorageService:HasItem("ConsoleLogs") then MemStorageService:RemoveItem("ConsoleLogs") end
 		-- if isfile("Trap Hub" .. "/console/logs.json") then writefile("Trap Hub" .. "/console/logs.json", "") end
 	end
 
@@ -391,9 +334,7 @@ end
 
 	for i = 1, #paths do
 		local str = paths[i]
-		if not isfolder(str) then
-			makefolder(str)
-		end
+		if not isfolder(str) then makefolder(str) end
 	end
 end)()
 
@@ -416,9 +357,7 @@ local function logtext(options, ...)
 		unpack(options),
 	}
 
-	xpcall(function()
-		Console:AddText(textargs)
-	end, function(err)
+	xpcall(function() Console:AddText(textargs) end, function(err)
 		setthreadcontext(securityContext)
 		Console:AddText(textargs)
 		setthreadcontext(8)
@@ -437,9 +376,7 @@ end
 if MemStorageService:HasItem("ConsoleLogs") then
 	local logs = game:GetService("HttpService"):JSONDecode(MemStorageService:GetItem("ConsoleLogs"))
 	for i, v in pairs(logs) do
-		if v._type ~= "ERROR" then
-			continue
-		end
+		if v._type ~= "ERROR" then continue end
 		logtext({
 			type = v._type,
 			IsOld = true,
@@ -449,9 +386,7 @@ end
 
 local old
 old = hookfunction(print, function(...)
-	if not Console._Configs.OutputRedirect or not checkcaller() then
-		return old(...)
-	end
+	if not Console._Configs.OutputRedirect or not checkcaller() then return old(...) end
 
 	logtext({
 		type = "OUTPUT",
@@ -460,9 +395,7 @@ end)
 
 local old
 old = hookfunction(warn, function(...)
-	if not Console._Configs.OutputRedirect or not checkcaller() then
-		return old(...)
-	end
+	if not Console._Configs.OutputRedirect or not checkcaller() then return old(...) end
 
 	logtext({
 		type = "WARN",
@@ -477,9 +410,7 @@ end
 
 local old
 old = hookfunction(error, function(message, level)
-	if not checkcaller() then
-		return old(message, level)
-	end
+	if not checkcaller() then return old(message, level) end
 	local trace = debug.traceback()
 	local line = trace:split("\n")[2]:gsub("[^%d]", "")
 	local message = (":%s: %s%s"):format(line, utf8.char(8203), message)
@@ -492,9 +423,7 @@ old = hookfunction(error, function(message, level)
 end)
 
 getgenv().ScriptContextConsoleTrapHub = function(message, stackTrace, script, details, securityLevel)
-	if script and not checkcaller() then
-		return
-	end
+	if script and not checkcaller() then return end
 
 	local text = ("%s%s%s\n%s"):format(message:sub(1, 1), utf8.char(8203), message:sub(2), stackTrace)
 	logtext({
@@ -504,16 +433,21 @@ end
 
 ScriptContext.ErrorDetailed:Connect(getgenv().ScriptContextConsoleTrapHub)
 
+--[[
+	If you want disables connection to the ScriptContext.ErrorDetailed:
+
+	for i, v in pairs(getconnections(ScriptContext.ErrorDetailed)) do
+		if v.Function == getgenv().ScriptContextConsoleTrapHub then continue end
+		v:Disable()
+	end
+]]
+
 player.OnTeleport:Connect(function(State)
-	if
-		State == Enum.TeleportState.Started
-		or State == Enum.TeleportState.InProgress
-		or State == Enum.TeleportState.RequestedFromServer
-	then
+	if State == Enum.TeleportState.Started or State == Enum.TeleportState.InProgress or State == Enum.TeleportState.RequestedFromServer then
 		Teleporting = true
 		MemStorageService:SetItem("ConsoleLogs", game:GetService("HttpService"):JSONEncode(Console.allLogs))
 		-- writefile("Trap Hub" .. "/console/logs.json", game:GetService("HttpService"):JSONEncode(Console.allLogs))
 	end
 end)
 
-info(string.format("Console loaded successfully with version %s/%s", Console._Version, "1.3.0"))
+info(string.format("Console loaded successfully with version %s/%s", Console._Version, "1.4.0"))
