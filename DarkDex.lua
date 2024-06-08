@@ -5,10 +5,12 @@
 	Final Version
 	Developed by Moon
 	Modified for Infinite Yield
-	
+
 	Dex is a debugging suite designed to help the user debug games and find any potential vulnerabilities.
 ]]
 
+
+getgenv().classImages = nil;
 local nodes = {}
 local selection
 local cloneref = cloneref or function(...) return ... end
@@ -17,7 +19,7 @@ local EmbeddedModules = {
 Explorer = function()
 --[[
 	Explorer App Module
-	
+
 	The main explorer interface
 ]]
 
@@ -135,7 +137,7 @@ local function main()
 		for i = 1,#insts do
 			local obj = insts[i]
 			if nodes[obj] then continue end -- Deferred
-			
+
 			local par = nodes[ffa(obj,"Instance")]
 			if not par then continue end
 			local newNode = {Obj = obj, Parent = par}
@@ -638,7 +640,7 @@ local function main()
 	end
 
 	Explorer.Refresh = function()
-		local maxNodes = math.max(math.ceil((treeFrame.AbsoluteSize.Y) / 20),0)	
+		local maxNodes = math.max(math.ceil((treeFrame.AbsoluteSize.Y) / 20),0)
 		local renameNodeVisible = false
 		local isa = game.IsA
 
@@ -885,7 +887,7 @@ local function main()
 		context:AddRegistered("VIEW_CONNECTIONS")
 		context:AddRegistered("GET_REFERENCES")
 		context:AddRegistered("VIEW_API")
-		
+
 		context:QueueDivider()
 
 		if presentClasses["BasePart"] or presentClasses["Model"] then
@@ -1123,11 +1125,23 @@ local function main()
 						hrp.CFrame = node.Obj.PrimaryPart.CFrame + Settings.Explorer.TeleportToOffset
 						break
 					else
+                        plr:RequestStreamAroundAsync(node.Obj:GetPivot().Position, 1)
 						local part = node.Obj:FindFirstChildWhichIsA("BasePart",true)
 						if part and nodes[part] then
 							hrp.CFrame = nodes[part].Obj.CFrame + Settings.Explorer.TeleportToOffset
 						end
 					end
+				elseif isa(node.Obj,"Tool") then
+					if node.Obj.PrimaryPart then
+						hrp.CFrame = node.Obj.PrimaryPart.CFrame + Settings.Explorer.TeleportToOffset
+					else
+						plr:RequestStreamAroundAsync(node.Obj:GetPivot().Position, 1)
+						local part = node.Obj:FindFirstChildWhichIsA("BasePart",true)
+						if part and nodes[part] then
+							hrp.CFrame = nodes[part].Obj.CFrame + Settings.Explorer.TeleportToOffset
+						end
+					end
+					break
 				end
 			end
 		end})
@@ -1278,8 +1292,14 @@ local function main()
 		end})
 
 		context:Register("COPY_BASE64", {Name = "Copy Base64", IconMap = Explorer.MiscIcons, Icon = "Copy", OnClick = function()
-			local scr = selection.List[1] and selection.List[1].Obj
-			if scr then ScriptViewer.CopyBase64(scr) end
+			local src = selection.List[1] and selection.List[1].Obj
+			if src then
+				for i = 1, 4 do
+					task.spawn(function()
+						env.setclipboard(env.base64encode(env.getscriptbytecode(src)))
+					end)
+				end
+			end
 		end})
 
 		context:Register("SELECT_CHARACTER",{Name = "Select Character", IconMap = Explorer.ClassIcons, Icon = 9, OnClick = function()
@@ -1311,7 +1331,7 @@ local function main()
 		context:Register("REFRESH_NIL",{Name = "Refresh Nil Instances", OnClick = function()
 			Explorer.RefreshNilInstances()
 		end})
-		
+
 		context:Register("HIDE_NIL",{Name = "Hide Nil Instances", OnClick = function()
 			Explorer.HideNilInstances()
 		end})
@@ -1321,7 +1341,7 @@ local function main()
 
 	Explorer.HideNilInstances = function()
 		table.clear(nilMap)
-		
+
 		local disconnectCon = Instance.new("Folder").ChildAdded:Connect(function() end).Disconnect
 		for i,v in next,nilCons do
 			disconnectCon(v[1])
@@ -1389,7 +1409,7 @@ local function main()
 				disconnect(obj[2])
 			end
 		end
-		
+
 		for obj in next,newNilRoots do
 			if not nilRoots[obj] then
 				nilRoots[obj] = {
@@ -1732,7 +1752,7 @@ local function main()
 							processFilter(Explorer.SearchFilters.Default(term))
 						end
 					end
-				end				
+				end
 			end
 
 			if op then
@@ -1762,16 +1782,16 @@ local specResults = specResults
 local service = service
 
 %s
-local function search(root)	
+local function search(root)
 %s
-	
+
 	local expandedpar = false
 	for i = 1,#root do
 		local node = root[i]
 		local obj = node.Obj
-		
+
 %s
-		
+
 		if %s then
 			expandTable[node] = 0
 			searchResults[node] = true
@@ -1785,7 +1805,7 @@ local function search(root)
 				expandedpar = true
 			end
 		end
-		
+
 		if #node > 0 then search(node) end
 	end
 end
@@ -1808,7 +1828,7 @@ return search]==]
 		expanded = (#query == 0 and Explorer.Expanded or Explorer.SearchExpanded)
 		searchFunc = nil
 
-		if #query > 0 then	
+		if #query > 0 then
 			local expandTable = Explorer.SearchExpanded
 			local specFilters
 
@@ -1900,7 +1920,7 @@ return search]==]
 			{3,"TextLabel",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Font=3,Name="EntryName",Parent={2},Position=UDim2.new(0,26,0,0),Size=UDim2.new(1,-26,1,0),Text="Workspace",TextColor3=Color3.new(0.86274516582489,0.86274516582489,0.86274516582489),TextSize=14,TextXAlignment=0,}},
 			{4,"TextButton",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,ClipsDescendants=true,Font=3,Name="Expand",Parent={2},Position=UDim2.new(0,-20,0,0),Size=UDim2.new(0,20,0,20),Text="",TextSize=14,}},
 			{5,"ImageLabel",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Image="rbxassetid://5642383285",ImageRectOffset=Vector2.new(144,16),ImageRectSize=Vector2.new(16,16),Name="Icon",Parent={4},Position=UDim2.new(0,2,0,2),ScaleType=4,Size=UDim2.new(0,16,0,16),}},
-			{6,"ImageLabel",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Image="rbxasset://textures/ClassImages.png",ImageRectOffset=Vector2.new(304,0),ImageRectSize=Vector2.new(16,16),Name="Icon",Parent={2},Position=UDim2.new(0,4,0,2),ScaleType=4,Size=UDim2.new(0,16,0,16),}},
+			{6,"ImageLabel",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Image=getgenv().classImages,ImageRectOffset=Vector2.new(304,0),ImageRectSize=Vector2.new(16,16),Name="Icon",Parent={2},Position=UDim2.new(0,4,0,2),ScaleType=4,Size=UDim2.new(0,16,0,16),}},
 		})
 
 		local sys = Lib.ClickSystem.new()
@@ -2124,7 +2144,7 @@ return search]==]
 	end
 
 	Explorer.Init = function()
-		Explorer.ClassIcons = Lib.IconMap.newLinear("rbxasset://textures/ClassImages.png",16,16)
+		Explorer.ClassIcons = Lib.IconMap.newLinear(getgenv().classImages,16,16)
 		Explorer.MiscIcons = Main.MiscIcons
 
 		clipboard = {}
@@ -2164,7 +2184,7 @@ return search]==]
 		Explorer.GuiElems.ToolBar = toolBar
 		Explorer.GuiElems.TreeFrame = treeFrame
 
-		scrollV = Lib.ScrollBar.new()		
+		scrollV = Lib.ScrollBar.new()
 		scrollV.WheelIncrement = 3
 		scrollV.Gui.Position = UDim2.new(1,-16,0,23)
 		scrollV:SetScrollFrame(treeFrame)
@@ -2273,7 +2293,7 @@ end,
 Properties = function()
 --[[
 	Properties App Module
-	
+
 	The main properties interface
 ]]
 
@@ -2674,11 +2694,8 @@ local function main()
 		local lower = string.lower
 		local RMDCustomOrders = RMD.PropertyOrders
 		local getAttributes = game.GetAttributes
-		local getTags = service.CollectionService.GetTags
 		local maxAttrs = Settings.Properties.MaxAttributes
 		local showingAttrs = Settings.Properties.ShowAttributes
-		local maxTags = Settings.Properties.MaxAttributes
-		local showingTags = Settings.Properties.ShowTags
 		local foundAttrs = {}
 		local attrCount = 0
 		local typeof = typeof
@@ -2737,8 +2754,6 @@ local function main()
 					end
 				end
 			end
-
-			
 		end
 
 		table.sort(props,function(a,b)
@@ -3012,7 +3027,7 @@ local function main()
 			local prop = viewList[index + Properties.Index]
 			if not prop then return end
 			if input.UserInputType == Enum.UserInputType.MouseMovement and not nameFrame.PropName.TextFits then
-				local fullNameFrame = Properties.FullNameFrame	
+				local fullNameFrame = Properties.FullNameFrame
 				local nameArr = string.split(prop.Class.."."..prop.Name..(prop.SubName or ""),".")
 				local dispName = prop.DisplayName or nameArr[#nameArr]
 				local sizeX = service.TextService:GetTextSize(dispName,14,Enum.Font.SourceSans,Vector2.new(math.huge,20)).X
@@ -3659,7 +3674,7 @@ local function main()
 	end
 
 	Properties.Refresh = function()
-		local maxEntries = math.max(math.ceil((propsFrame.AbsoluteSize.Y) / 23),0)	
+		local maxEntries = math.max(math.ceil((propsFrame.AbsoluteSize.Y) / 23),0)
 		local maxX = propsFrame.AbsoluteSize.X
 		local valueWidth = math.max(Properties.MinInputWidth,maxX-Properties.ViewWidth)
 		local inputPropVisible = false
@@ -4147,7 +4162,7 @@ local function main()
 		end)
 
 		-- Init scrollbars
-		scrollV = Lib.ScrollBar.new()		
+		scrollV = Lib.ScrollBar.new()
 		scrollV.WheelIncrement = 3
 		scrollV.Gui.Position = UDim2.new(1,-16,0,23)
 		scrollV:SetScrollFrame(propsFrame)
@@ -4183,7 +4198,7 @@ end,
 ScriptViewer = function()
 --[[
 	Script Viewer App Module
-	
+
 	A script viewer that is basically a notepad
 ]]
 
@@ -4224,15 +4239,6 @@ local function main()
 		if not success or not source then source, PreviousScr = "-- DEX - Source failed to decompile", nil else PreviousScr = scr end
 		codeFrame:SetText(source:gsub("\0", "\\0")) -- Fix stupid breaking script viewer
 		window:Show()
-	end
-
-	ScriptViewer.CopyBase64 = function(src)
-		print("Copying base64")
-		local s, bytecode = pcall(env.getscriptbytecode, scr)
-		if not s then
-			return "failed to get bytecode " .. tostring(bytecode)
-		end
-		env.setclipboard(env.base64encode(tostring(bytecode)))
 	end
 
 	ScriptViewer.Init = function()
@@ -4379,7 +4385,7 @@ end,
 Lib = function()
 --[[
 	Lib Module
-	
+
 	Container for functions and classes
 ]]
 
@@ -4431,7 +4437,7 @@ local function main()
 				else
 					res[i] = v
 				end
-			end		
+			end
 			return res
 		end
 
@@ -4468,7 +4474,7 @@ local function main()
 		if gui == nil then return false end
 		local mouse = Main.Mouse
 		local guiPosition = gui.AbsolutePosition
-		local guiSize = gui.AbsoluteSize	
+		local guiSize = gui.AbsoluteSize
 
 		return mouse.X >= guiPosition.X and mouse.X < guiPosition.X + guiSize.X and mouse.Y >= guiPosition.Y and mouse.Y < guiPosition.Y + guiSize.Y
 	end
@@ -4577,7 +4583,7 @@ local function main()
 					txt = txt:match'^%s*(.*%S)' or ''
 					if #txt ~= 0 then
 						t[#t+1] = {text=txt}
-					end    
+					end
 				end
 
 				s:gsub('<([?!/]?)([-:_%w]+)%s*(/?>?)([^<]*)', function(type, name, closed, txt)
@@ -4822,7 +4828,7 @@ local function main()
 		signalWait(renderStepped)
 		return f(...)
 	end
-	
+
 	Lib.LoadCustomAsset = function(filepath)
 		if not env.getcustomasset or not env.isfile or not env.isfile(filepath) then return end
 
@@ -4850,7 +4856,7 @@ local function main()
 		end
 
 		funcs.Connect = function(self,func)
-			if type(func) ~= "function" then error("Attempt to connect a non-function") end		
+			if type(func) ~= "function" then error("Attempt to connect a non-function") end
 			local con = {
 				Signal = self,
 				Func = func,
@@ -5001,7 +5007,7 @@ local function main()
 			if not self.NumX then
 				obj.ImageRectOffset = Vector2.new(self.IconSizeX*index, 0)
 			else
-				obj.ImageRectOffset = Vector2.new(self.IconSizeX*(index % self.NumX), self.IconSizeY*math.floor(index / self.NumX))	
+				obj.ImageRectOffset = Vector2.new(self.IconSizeX*(index % self.NumX), self.IconSizeY*math.floor(index / self.NumX))
 			end
 		end
 
@@ -5222,7 +5228,7 @@ local function main()
 				local lastThumbPos = nil
 
 				buttonPress = false
-				thumbFramePress = false			
+				thumbFramePress = false
 				thumbPress = true
 				scrollThumb.BackgroundTransparency = 0
 				local mouseOffset = mouse[dir] - scrollThumb.AbsolutePosition[dir]
@@ -5276,7 +5282,7 @@ local function main()
 					end
 				end
 
-				thumbPress = false			
+				thumbPress = false
 				thumbFramePress = true
 				doTick()
 				local thumbFrameTick = tick()
@@ -6509,7 +6515,7 @@ local function main()
 
 		funcs.AddRegistered = function(self,name,disabled)
 			if not self.Registered[name] then error(name.." is not registered") end
-			
+
 			if self.QueuedDivider then
 				local text = self.QueuedDividerText and #self.QueuedDividerText > 0 and self.QueuedDividerText
 				self:AddDivider(text)
@@ -6542,7 +6548,7 @@ local function main()
 			table.insert(self.Items,{Divider = true, Text = text, TextSize = textWidth and textWidth+4})
 			self.Updated = nil
 		end
-		
+
 		funcs.QueueDivider = function(self,text)
 			self.QueuedDivider = true
 			self.QueuedDividerText = text or ""
@@ -6793,7 +6799,7 @@ local function main()
 
 		local keywords = {
 			["and"] = true,
-			["break"] = true, 
+			["break"] = true,
 			["do"] = true,
 			["else"] = true,
 			["elseif"] = true,
@@ -6902,17 +6908,17 @@ local function main()
 			[">"] = "&gt;",
 			["&"] = "&amp;"
 		}
-		
+
 		local tabSub = "\205"
 		local tabReplacement = (" %s%s "):format(tabSub,tabSub)
-		
+
 		local tabJumps = {
 			[("[^%s] %s"):format(tabSub,tabSub)] = 0,
 			[(" %s%s"):format(tabSub,tabSub)] = -1,
 			[("%s%s "):format(tabSub,tabSub)] = 2,
 			[("%s [^%s]"):format(tabSub,tabSub)] = 1,
 		}
-		
+
 		local tweenService = service.TweenService
 		local lineTweens = {}
 
@@ -6940,20 +6946,20 @@ local function main()
 
 			builtInInited = true
 		end
-		
+
 		local function setupEditBox(obj)
 			local editBox = obj.GuiElems.EditBox
-			
+
 			editBox.Focused:Connect(function()
 				obj:ConnectEditBoxEvent()
 				obj.Editing = true
 			end)
-			
+
 			editBox.FocusLost:Connect(function()
 				obj:DisconnectEditBoxEvent()
 				obj.Editing = false
 			end)
-			
+
 			editBox:GetPropertyChangedSignal("Text"):Connect(function()
 				local text = editBox.Text
 				if #text == 0 or obj.EditBoxCopying then return end
@@ -6961,16 +6967,16 @@ local function main()
 				obj:AppendText(text)
 			end)
 		end
-		
+
 		local function setupMouseSelection(obj)
 			local mouse = plr:GetMouse()
 			local codeFrame = obj.GuiElems.LinesFrame
 			local lines = obj.Lines
-			
+
 			codeFrame.InputBegan:Connect(function(input)
 				if input.UserInputType == Enum.UserInputType.MouseButton1 then
 					local fontSizeX,fontSizeY = math.ceil(obj.FontSize/2),obj.FontSize
-					
+
 					local relX = mouse.X - codeFrame.AbsolutePosition.X
 					local relY = mouse.Y - codeFrame.AbsolutePosition.Y
 					local selX = math.round(relX / fontSizeX) + obj.ViewX
@@ -6997,7 +7003,7 @@ local function main()
 
 						if sel2Y < selY or (sel2Y == selY and sel2X < selX) then
 							obj.SelectionRange = {{sel2X,sel2Y},{selX,selY}}
-						else						
+						else
 							obj.SelectionRange = {{selX,selY},{sel2X,sel2Y}}
 						end
 
@@ -7055,14 +7061,14 @@ local function main()
 				{1,"Frame",{BackgroundColor3=Color3.new(0.15686275064945,0.15686275064945,0.15686275064945),BorderSizePixel = 0,Position=UDim2.new(0.5,-300,0.5,-200),Size=UDim2.new(0,600,0,400),}},
 			})
 			local elems = {}
-			
+
 			local linesFrame = Instance.new("Frame")
 			linesFrame.Name = "Lines"
 			linesFrame.BackgroundTransparency = 1
 			linesFrame.Size = UDim2.new(1,0,1,0)
 			linesFrame.ClipsDescendants = true
 			linesFrame.Parent = frame
-			
+
 			local lineNumbersLabel = Instance.new("TextLabel")
 			lineNumbersLabel.Name = "LineNumbers"
 			lineNumbersLabel.BackgroundTransparency = 1
@@ -7072,47 +7078,47 @@ local function main()
 			lineNumbersLabel.ClipsDescendants = true
 			lineNumbersLabel.RichText = true
 			lineNumbersLabel.Parent = frame
-			
+
 			local cursor = Instance.new("Frame")
 			cursor.Name = "Cursor"
 			cursor.BackgroundColor3 = Color3.fromRGB(220,220,220)
 			cursor.BorderSizePixel = 0
 			cursor.Parent = frame
-			
+
 			local editBox = Instance.new("TextBox")
 			editBox.Name = "EditBox"
 			editBox.MultiLine = true
 			editBox.Visible = false
 			editBox.Parent = frame
-			
+
 			lineTweens.Invis = tweenService:Create(cursor,TweenInfo.new(0.4,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{BackgroundTransparency = 1})
 			lineTweens.Vis = tweenService:Create(cursor,TweenInfo.new(0.2,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{BackgroundTransparency = 0})
-			
+
 			elems.LinesFrame = linesFrame
 			elems.LineNumbersLabel = lineNumbersLabel
 			elems.Cursor = cursor
 			elems.EditBox = editBox
 			elems.ScrollCorner = create({{1,"Frame",{BackgroundColor3=Color3.new(0.15686275064945,0.15686275064945,0.15686275064945),BorderSizePixel=0,Name="ScrollCorner",Position=UDim2.new(1,-16,1,-16),Size=UDim2.new(0,16,0,16),Visible=false,}}})
-			
+
 			elems.ScrollCorner.Parent = frame
 			linesFrame.InputBegan:Connect(function(input)
 				if input.UserInputType == Enum.UserInputType.MouseButton1 then
 					obj:SetEditing(true,input)
 				end
 			end)
-			
+
 			obj.Frame = frame
 			obj.Gui = frame
 			obj.GuiElems = elems
 			setupEditBox(obj)
 			setupMouseSelection(obj)
-			
+
 			return frame
 		end
-		
+
 		funcs.GetSelectionText = function(self)
 			if not self:IsValidRange() then return "" end
-			
+
 			local selectionRange = self.SelectionRange
 			local selX,selY = selectionRange[1][1], selectionRange[1][2]
 			local sel2X,sel2Y = selectionRange[2][1], selectionRange[2][2]
@@ -7128,7 +7134,7 @@ local function main()
 			local leftSub = lines[selY+1]:sub(selX+1)
 			local rightSub = lines[sel2Y+1]:sub(1,sel2X)
 
-			local result = leftSub.."\n" 
+			local result = leftSub.."\n"
 			for i = selY+1,sel2Y-1 do
 				result = result..lines[i+1].."\n"
 			end
@@ -7136,29 +7142,29 @@ local function main()
 
 			return self:ConvertText(result,false)
 		end
-		
+
 		funcs.SetCopyableSelection = function(self)
 			local text = self:GetSelectionText()
 			local editBox = self.GuiElems.EditBox
-			
+
 			self.EditBoxCopying = true
 			editBox.Text = text
 			editBox.SelectionStart = 1
 			editBox.CursorPosition = #editBox.Text + 1
 			self.EditBoxCopying = false
 		end
-		
+
 		funcs.ConnectEditBoxEvent = function(self)
 			if self.EditBoxEvent then
 				self.EditBoxEvent:Disconnect()
 			end
-			
+
 			self.EditBoxEvent = service.UserInputService.InputBegan:Connect(function(input)
 				if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
-				
+
 				local keycodes = Enum.KeyCode
 				local keycode = input.KeyCode
-				
+
 				local function setupMove(key,func)
 					local endCon,finished
 					endCon = service.UserInputService.InputEnded:Connect(function(input)
@@ -7170,7 +7176,7 @@ local function main()
 					Lib.FastWait(0.5)
 					while not finished do func() Lib.FastWait(0.03) end
 				end
-				
+
 				if keycode == keycodes.Down then
 					setupMove(keycodes.Down,function()
 						self.CursorX = self.FloatCursorX
@@ -7219,7 +7225,7 @@ local function main()
 						else
 							endRange = {self.CursorX,self.CursorY}
 						end
-						
+
 						if not startRange then
 							local line = self.Lines[self.CursorY+1] or ""
 							self.CursorX = self.CursorX - 1 - (line:sub(self.CursorX-3,self.CursorX) == tabReplacement and 3 or 0)
@@ -7230,10 +7236,10 @@ local function main()
 							end
 							self.FloatCursorX = self.CursorX
 							self:UpdateCursor()
-						
+
 							startRange = startRange or {self.CursorX,self.CursorY}
 						end
-						
+
 						self:DeleteRange({startRange,endRange},false,true)
 						self:ResetSelection(true)
 						self:JumpToCursor()
@@ -7274,18 +7280,18 @@ local function main()
 				end
 			end)
 		end
-		
+
 		funcs.DisconnectEditBoxEvent = function(self)
 			if self.EditBoxEvent then
 				self.EditBoxEvent:Disconnect()
 			end
 		end
-		
+
 		funcs.ResetSelection = function(self,norefresh)
 			self.SelectionRange = {{-1,-1},{-1,-1}}
 			if not norefresh then self:Refresh() end
 		end
-		
+
 		funcs.IsValidRange = function(self,range)
 			local selectionRange = range or self.SelectionRange
 			local selX,selY = selectionRange[1][1], selectionRange[1][2]
@@ -7295,82 +7301,82 @@ local function main()
 
 			return true
 		end
-		
+
 		funcs.DeleteRange = function(self,range,noprocess,updatemouse)
 			range = range or self.SelectionRange
 			if not self:IsValidRange(range) then return end
-			
+
 			local lines = self.Lines
 			local selX,selY = range[1][1], range[1][2]
 			local sel2X,sel2Y = range[2][1], range[2][2]
 			local deltaLines = sel2Y-selY
-			
+
 			if not lines[selY+1] or not lines[sel2Y+1] then return end
-			
+
 			local leftSub = lines[selY+1]:sub(1,selX)
 			local rightSub = lines[sel2Y+1]:sub(sel2X+1)
 			lines[selY+1] = leftSub..rightSub
-			
+
 			local remove = table.remove
 			for i = 1,deltaLines do
 				remove(lines,selY+2)
 			end
-			
+
 			if range == self.SelectionRange then self.SelectionRange = {{-1,-1},{-1,-1}} end
 			if updatemouse then
 				self.CursorX = selX
 				self.CursorY = selY
 				self:UpdateCursor()
 			end
-			
+
 			if not noprocess then
 				self:ProcessTextChange()
 			end
 		end
-		
+
 		funcs.AppendText = function(self,text)
 			self:DeleteRange(nil,true,true)
 			local lines,cursorX,cursorY = self.Lines,self.CursorX,self.CursorY
 			local line = lines[cursorY+1]
 			local before = line:sub(1,cursorX)
 			local after = line:sub(cursorX+1)
-			
+
 			text = text:gsub("\r\n","\n")
 			text = self:ConvertText(text,true) -- Tab Convert
-			
+
 			local textLines = text:split("\n")
 			local insert = table.insert
-			
+
 			for i = 1,#textLines do
 				local linePos = cursorY+i
 				if i > 1 then insert(lines,linePos,"") end
-				
+
 				local textLine = textLines[i]
 				local newBefore = (i == 1 and before or "")
 				local newAfter = (i == #textLines and after or "")
-			
+
 				lines[linePos] = newBefore..textLine..newAfter
 			end
-			
+
 			if #textLines > 1 then cursorX = 0 end
-			
+
 			self:ProcessTextChange()
 			self.CursorX = cursorX + #textLines[#textLines]
 			self.CursorY = cursorY + #textLines-1
 			self:UpdateCursor()
 		end
-		
+
 		funcs.ScrollDelta = function(self,x,y)
 			self.ScrollV:ScrollTo(self.ScrollV.Index + y)
 			self.ScrollH:ScrollTo(self.ScrollH.Index + x)
 		end
-		
+
 		-- x and y starts at 0
 		funcs.TabAdjust = function(self,x,y)
 			local lines = self.Lines
 			local line = lines[y+1]
 			x=x+1
-			
+
 			if line then
 				local left = line:sub(x-1,x-1)
 				local middle = line:sub(x,x)
@@ -7385,10 +7391,10 @@ local function main()
 			end
 			return 0
 		end
-		
-		funcs.SetEditing = function(self,on,input)			
+
+		funcs.SetEditing = function(self,on,input)
 			self:UpdateCursor(input)
-			
+
 			if on then
 				if self.Editable then
 					self.GuiElems.EditBox.Text = ""
@@ -7398,18 +7404,18 @@ local function main()
 				self.GuiElems.EditBox:ReleaseFocus()
 			end
 		end
-		
+
 		funcs.CursorAnim = function(self,on)
 			local cursor = self.GuiElems.Cursor
 			local animTime = tick()
 			self.LastAnimTime = animTime
-			
+
 			if not on then return end
-			
+
 			lineTweens.Invis:Cancel()
 			lineTweens.Vis:Cancel()
 			cursor.BackgroundTransparency = 0
-			
+
 			coroutine.wrap(function()
 				while self.Editable do
 					Lib.FastWait(0.5)
@@ -7422,21 +7428,21 @@ local function main()
 				end
 			end)()
 		end
-		
+
 		funcs.MoveCursor = function(self,x,y)
 			self.CursorX = x
 			self.CursorY = y
 			self:UpdateCursor()
 			self:JumpToCursor()
 		end
-		
+
 		funcs.JumpToCursor = function(self)
 			self:Refresh()
 		end
-		
+
 		funcs.UpdateCursor = function(self,input)
 			local linesFrame = self.GuiElems.LinesFrame
-			local cursor = self.GuiElems.Cursor			
+			local cursor = self.GuiElems.Cursor
 			local hSize = math.max(0,linesFrame.AbsoluteSize.X)
 			local vSize = math.max(0,linesFrame.AbsoluteSize.Y)
 			local maxLines = math.ceil(vSize / self.FontSize)
@@ -7445,7 +7451,7 @@ local function main()
 			local totalLinesStr = tostring(#self.Lines)
 			local fontWidth = math.ceil(self.FontSize / 2)
 			local linesOffset = #totalLinesStr*fontWidth + 4*fontWidth
-			
+
 			if input then
 				local linesFrame = self.GuiElems.LinesFrame
 				local frameX,frameY = linesFrame.AbsolutePosition.X,linesFrame.AbsolutePosition.Y
@@ -7455,25 +7461,25 @@ local function main()
 				self.CursorX = self.ViewX + math.round((mouseX - frameX) / fontSizeX)
 				self.CursorY = self.ViewY + math.floor((mouseY - frameY) / fontSizeY)
 			end
-			
+
 			local cursorX,cursorY = self.CursorX,self.CursorY
-			
+
 			local line = self.Lines[cursorY+1] or ""
 			if cursorX > #line then cursorX = #line
 			elseif cursorX < 0 then cursorX = 0 end
-			
+
 			if cursorY >= #self.Lines then
 				cursorY = math.max(0,#self.Lines-1)
 			elseif cursorY < 0 then
 				cursorY = 0
 			end
-			
+
 			cursorX = cursorX + self:TabAdjust(cursorX,cursorY)
-			
+
 			-- Update modified
 			self.CursorX = cursorX
 			self.CursorY = cursorY
-			
+
 			local cursorVisible = (cursorX >= viewX) and (cursorY >= viewY) and (cursorX <= viewX + maxCols) and (cursorY <= viewY + maxLines)
 			if cursorVisible then
 				local offX = (cursorX - viewX)
@@ -7762,13 +7768,13 @@ local function main()
 					lineFrame.Size = UDim2.new(1,0,0,self.FontSize)
 					lineFrame.BorderSizePixel = 0
 					lineFrame.BackgroundTransparency = 1
-					
+
 					local selectionHighlight = Instance.new("Frame")
 					selectionHighlight.Name = "SelectionHighlight"
 					selectionHighlight.BorderSizePixel = 0
 					selectionHighlight.BackgroundColor3 = Settings.Theme.Syntax.SelectionBack
 					selectionHighlight.Parent = lineFrame
-					
+
 					local label = Instance.new("TextLabel")
 					label.Name = "Label"
 					label.BackgroundTransparency = 1
@@ -7780,7 +7786,7 @@ local function main()
 					label.TextColor3 = self.Colors.Text
 					label.ZIndex = 2
 					label.Parent = lineFrame
-					
+
 					lineFrame.Parent = linesFrame
 					self.LineFrames[row] = lineFrame
 				end
@@ -7796,7 +7802,7 @@ local function main()
 				local selectionTemplate = richTemplates.Selection
 				local curType = highlights[colStart]
 				local curTemplate = richTemplates[typeMap[curType]] or textTemplate
-				
+
 				-- Selection Highlight
 				local selectionRange = self.SelectionRange
 				local selPos1 = selectionRange[1]
@@ -7804,7 +7810,7 @@ local function main()
 				local selRow,selColumn = selPos1[2],selPos1[1]
 				local sel2Row,sel2Column = selPos2[2],selPos2[1]
 				local selRelaX,selRelaY = viewX,relaY-1
-				
+
 				if selRelaY >= selPos1[2] and selRelaY <= selPos2[2] then
 					local fontSizeX = math.ceil(self.FontSize/2)
 					local posX = (selRelaY == selPos1[2] and selPos1[1] or 0) - viewX
@@ -7816,28 +7822,28 @@ local function main()
 				else
 					lineFrame.SelectionHighlight.Visible = false
 				end
-				
+
 				-- Selection Text Color for first char
 				local inSelection = selRelaY >= selRow and selRelaY <= sel2Row and (selRelaY == selRow and viewX >= selColumn or selRelaY ~= selRow) and (selRelaY == sel2Row and viewX < sel2Column or selRelaY ~= sel2Row)
 				if inSelection then
 					curType = -999
 					curTemplate = selectionTemplate
 				end
-				
+
 				for col = 2,maxCols do
 					local relaX = viewX + col
 					local selRelaX = relaX-1
 					local posType = highlights[relaX]
-					
+
 					-- Selection Text Color
 					local inSelection = selRelaY >= selRow and selRelaY <= sel2Row and (selRelaY == selRow and selRelaX >= selColumn or selRelaY ~= selRow) and (selRelaY == sel2Row and selRelaX < sel2Column or selRelaY ~= sel2Row)
 					if inSelection then
 						posType = -999
 					end
-					
+
 					if posType ~= curType then
 						local template = (inSelection and selectionTemplate) or richTemplates[typeMap[posType]] or textTemplate
-						
+
 						if template ~= curTemplate then
 							local nextText = gsub(sub(lineText,colStart,relaX-1),"['\"<>&]",richReplace)
 							resText = resText .. (curTemplate ~= textTemplate and (curTemplate .. nextText .. "</font>") or nextText)
@@ -7924,23 +7930,23 @@ local function main()
 		funcs.ProcessTextChange = function(self)
 			local maxCols = 0
 			local lines = self.Lines
-			
+
 			for i = 1,#lines do
 				local lineLen = #lines[i]
 				if lineLen > maxCols then
 					maxCols = lineLen
 				end
 			end
-			
+
 			self.MaxTextCols = maxCols
-			self:UpdateView()	
+			self:UpdateView()
 			self.Text = table.concat(self.Lines,"\n")
 			self:MapNewLines()
 			self:PreHighlight()
 			self:Refresh()
 			--self.TextChanged:Fire()
 		end
-		
+
 		funcs.ConvertText = function(self,text,toEditor)
 			if toEditor then
 				return text:gsub("\t",(" %s%s "):format(tabSub,tabSub))
@@ -7965,7 +7971,7 @@ local function main()
 				lines[count] = line
 				count = count + 1
 			end
-			
+
 			self:ProcessTextChange()
 		end
 
@@ -8655,7 +8661,7 @@ local function main()
 			local function colorStripInput()
 				local relativeY = mouse.Y - colorStrip.AbsolutePosition.Y
 
-				if relativeY < 0 then relativeY = 0 elseif relativeY > 199 then relativeY = 199 end	
+				if relativeY < 0 then relativeY = 0 elseif relativeY > 199 then relativeY = 199 end
 
 				val = (199 - relativeY)/199
 
@@ -8870,7 +8876,7 @@ local function main()
 					local newColor = Color3.new(red,green,blue)
 					hue,sat,val = Color3.toHSV(newColor)
 					updateColor()
-				end)	
+				end)
 
 				newColor.Parent = basicColorsFrame
 				column = column + 1
@@ -9260,7 +9266,7 @@ local function main()
 
 						local envPercent = (lineCount-fromPoint[4].Position.X.Offset)/(toPoint[4].Position.X.Offset-fromPoint[4].Position.X.Offset)
 						local envLerp = fromEnvelope+(nextEnvelope-fromEnvelope)*envPercent
-						local relativeSize = (envLerp/10)*numberLineSize.Y						
+						local relativeSize = (envLerp/10)*numberLineSize.Y
 
 						local line = eLines[lineCount + 3]
 						if line then
@@ -9566,7 +9572,7 @@ local function main()
 					local nextColor = colors[i]
 					local endPos = math.floor((colorLine.AbsoluteSize.X-1) * nextColor[2]) + 1
 					nextColor[3].Position = UDim2.new(0,endPos,0,0)
-				end		
+				end
 			end
 			newMt.Redraw = redraw
 
@@ -10208,17 +10214,19 @@ end)()
 local Settings = {}
 local Apps = {}
 local env = {}
+
 local service = setmetatable({},{__index = function(self,name)
 	local serv = cloneref(game:GetService(name))
 	self[name] = serv
 	return serv
 end})
+
 local plr = service.Players.LocalPlayer or service.Players.PlayerAdded:wait()
 
 local create = function(data)
 	local insts = {}
 	for i,v in pairs(data) do insts[v[1]] = Instance.new(v[2]) end
-	
+
 	for _,v in pairs(data) do
 		for prop,val in pairs(v[3]) do
 			if type(val) == "table" then
@@ -10228,7 +10236,7 @@ local create = function(data)
 			end
 		end
 	end
-	
+
 	return insts[1]
 end
 
@@ -10242,7 +10250,7 @@ end
 
 Main = (function()
 	local Main = {}
-	
+
 	Main.ModuleList = {"Explorer","Properties","ScriptViewer"}
 	Main.Elevated = false
 	Main.MissingEnv = {}
@@ -10251,21 +10259,21 @@ Main = (function()
 	Main.AppControls = {}
 	Main.Apps = Apps
 	Main.MenuApps = {}
-	
+
 	Main.DisplayOrders = {
 		SideWindow = 8,
 		Window = 10,
 		Menu = 100000,
 		Core = 101000
 	}
-	
+
 	Main.GetInitDeps = function()
 		return {
 			Main = Main,
 			Lib = Lib,
 			Apps = Apps,
 			Settings = Settings,
-			
+
 			API = API,
 			RMD = RMD,
 			env = env,
@@ -10275,7 +10283,7 @@ Main = (function()
 			createSimple = createSimple
 		}
 	end
-	
+
 	Main.Error = function(str)
 		if rconsoleprint then
 			rconsoleprint("DEX ERROR: "..tostring(str).."\n")
@@ -10284,17 +10292,17 @@ Main = (function()
 			error(str)
 		end
 	end
-	
+
 	Main.LoadModule = function(name)
 		if Main.Elevated then -- If you don't have filesystem api then ur outta luck tbh
 			local control
-			
+
 			if EmbeddedModules then -- Offline Modules
 				control = EmbeddedModules[name]()
-				
+
 				if not control then Main.Error("Missing Embedded Module: "..name) end
 			end
-			
+
 			Main.AppControls[name] = control
 			control.InitDeps(Main.GetInitDeps())
 
@@ -10304,17 +10312,17 @@ Main = (function()
 		else
 			local module = script:WaitForChild("Modules"):WaitForChild(name,2)
 			if not module then Main.Error("CANNOT FIND MODULE "..name) end
-			
+
 			local control = require(module)
 			Main.AppControls[name] = control
 			control.InitDeps(Main.GetInitDeps())
-			
+
 			local moduleData = control.Main()
 			Apps[name] = moduleData
 			return moduleData
 		end
 	end
-	
+
 	Main.LoadModules = function()
 		for i,v in pairs(Main.ModuleList) do
 			local s,e = pcall(Main.LoadModule,v)
@@ -10322,7 +10330,7 @@ Main = (function()
 				Main.Error("FAILED LOADING " + v + " CAUSE " + e)
 			end
 		end
-		
+
 		-- Init Major Apps and define them in modules
 		Explorer = Apps.Explorer
 		Properties = Apps.Properties
@@ -10334,7 +10342,7 @@ Main = (function()
 			ScriptViewer = ScriptViewer,
 			Notebook = Notebook
 		}
-		
+
 		Main.AppControls.Lib.InitAfterMain(appTable)
 		for i,v in pairs(Main.ModuleList) do
 			local control = Main.AppControls[v]
@@ -10380,8 +10388,6 @@ Main = (function()
                 return "failed to get bytecode " .. tostring(bytecode)
             end
 
-			bytecode = env.base64encode(tostring(bytecode))
-
 			--[[
             local response = env.request({
                 Url = "https://unluau.lonegladiator.dev/unluau/decompile",
@@ -10403,7 +10409,7 @@ Main = (function()
             return decoded.output
 			]]
 
-			return string.format("Decompilation is disabled for now.\nBytecode64:\n%s", bytecode)
+			return env.base64encode(bytecode)
         end)
         env.protectgui = protect_gui or (syn and syn.protect_gui)
         env.gethui = gethui or get_hidden_gui
@@ -10424,7 +10430,7 @@ Main = (function()
 			local s,decoded = service.HttpService:JSONDecode(data)
 			if s and decoded then
 				for i,v in next,decoded do
-					
+
 				end
 			else
 				-- TODO: Notification
@@ -10433,7 +10439,7 @@ Main = (function()
 			Main.ResetSettings()
 		end
 	end
-	
+
 	Main.ResetSettings = function()
 		local function recur(t,res)
 			for set,val in pairs(t) do
@@ -10450,13 +10456,13 @@ Main = (function()
 		end
 		recur(DefaultSettings,Settings)
 	end
-	
+
 	Main.FetchAPI = function()
 		local api,rawAPI
 		if Main.Elevated then
 			if Main.LocalDepsUpToDate() then
 				local localAPI = Lib.ReadFile("dex/rbx_api.dat")
-				if localAPI then 
+				if localAPI then
 					rawAPI = localAPI
 				else
 					Main.DepsVersionData[1] = ""
@@ -10472,10 +10478,10 @@ Main = (function()
 		end
 		Main.RawAPI = rawAPI
 		api = service.HttpService:JSONDecode(rawAPI)
-		
+
 		local classes,enums = {},{}
 		local categoryOrder,seenCategories = {},{}
-		
+
 		local function insertAbove(t,item,aboveItem)
 			local findPos = table.find(t,item)
 			if not findPos then return end
@@ -10485,7 +10491,7 @@ Main = (function()
 			if not pos then return end
 			table.insert(t,pos,item)
 		end
-		
+
 		for _,class in pairs(api.Classes) do
 			local newClass = {}
 			newClass.Name = class.Name
@@ -10495,7 +10501,7 @@ Main = (function()
 			newClass.Events = {}
 			newClass.Callbacks = {}
 			newClass.Tags = {}
-			
+
 			if class.Tags then for c,tag in pairs(class.Tags) do newClass.Tags[tag] = true end end
 			for __,member in pairs(class.Members) do
 				local newMember = {}
@@ -10504,7 +10510,7 @@ Main = (function()
 				newMember.Security = member.Security
 				newMember.Tags ={}
 				if member.Tags then for c,tag in pairs(member.Tags) do newMember.Tags[tag] = true end end
-				
+
 				local mType = member.MemberType
 				if mType == "Property" then
 					local propCategory = member.Category or "Other"
@@ -10532,20 +10538,20 @@ Main = (function()
 					table.insert(newClass.Events,newMember)
 				end
 			end
-			
+
 			classes[class.Name] = newClass
 		end
-		
+
 		for _,class in pairs(classes) do
 			class.Superclass = classes[class.Superclass]
 		end
-		
+
 		for _,enum in pairs(api.Enums) do
 			local newEnum = {}
 			newEnum.Name = enum.Name
 			newEnum.Items = {}
 			newEnum.Tags = {}
-			
+
 			if enum.Tags then for c,tag in pairs(enum.Tags) do newEnum.Tags[tag] = true end end
 			for __,item in pairs(enum.Items) do
 				local newItem = {}
@@ -10553,14 +10559,14 @@ Main = (function()
 				newItem.Value = item.Value
 				table.insert(newEnum.Items,newItem)
 			end
-			
+
 			enums[enum.Name] = newEnum
 		end
-		
+
 		local function getMember(class,member)
 			if not classes[class] or not classes[class][member] then return end
 	        local result = {}
-	
+
 	        local currentClass = classes[class]
 	        while currentClass do
 	            for _,entry in pairs(currentClass[member]) do
@@ -10568,11 +10574,11 @@ Main = (function()
 	            end
 	            currentClass = currentClass.Superclass
 	        end
-	
+
 	        table.sort(result,function(a,b) return a.Name < b.Name end)
 	        return result
 		end
-		
+
 		insertAbove(categoryOrder,"Behavior","Tuning")
 		insertAbove(categoryOrder,"Appearance","Data")
 		insertAbove(categoryOrder,"Attachments","Axes")
@@ -10585,12 +10591,12 @@ Main = (function()
 		insertAbove(categoryOrder,"Character","Controls")
 		categoryOrder[#categoryOrder+1] = "Unscriptable"
 		categoryOrder[#categoryOrder+1] = "Attributes"
-		
+
 		local categoryOrderMap = {}
 		for i = 1,#categoryOrder do
 			categoryOrderMap[categoryOrder[i]] = i
 		end
-		
+
 		return {
 			Classes = classes,
 			Enums = enums,
@@ -10598,13 +10604,13 @@ Main = (function()
 			GetMember = getMember
 		}
 	end
-	
+
 	Main.FetchRMD = function()
 		local rawXML
 		if Main.Elevated then
 			if Main.LocalDepsUpToDate() then
 				local localRMD = Lib.ReadFile("dex/rbx_rmd.dat")
-				if localRMD then 
+				if localRMD then
 					rawXML = localRMD
 				else
 					Main.DepsVersionData[1] = ""
@@ -10623,7 +10629,7 @@ Main = (function()
 		local classList = parsed.children[1].children[1].children
 		local enumList = parsed.children[1].children[2].children
 		local propertyOrders = {}
-		
+
 		local classes,enums = {},{}
 		for _,class in pairs(classList) do
 			local className = ""
@@ -10682,7 +10688,7 @@ Main = (function()
 				end
 			end
 		end
-		
+
 		for _,enum in pairs(enumList) do
 			local enumName = ""
 			for _,child in pairs(enum.children) do
@@ -10710,7 +10716,7 @@ Main = (function()
 				end
 			end
 		end
-		
+
 		return {Classes = classes, Enums = enums, PropertyOrders = propertyOrders}
 	end
 
@@ -10758,7 +10764,7 @@ Main = (function()
 		local statusText = gui.Main.Holder.StatusText
 		local progressBar = gui.Main.Holder.ProgressBar
 		local tweenS = service.TweenService
-		
+
 		local renderStepped = service.RunService.RenderStepped
 		local signalWait = renderStepped.wait
 		local fastwait = function(s)
@@ -10766,9 +10772,9 @@ Main = (function()
 			local start = tick()
 			while tick() - start < s do signalWait(renderStepped) end
 		end
-		
+
 		statusText.Text = initStatus
-		
+
 		local function tweenNumber(n,ti,func)
 			local tweenVal = Instance.new("IntValue")
 			tweenVal.Value = 0
@@ -10779,7 +10785,7 @@ Main = (function()
 				tweenVal:Destroy()
 			end)
 		end
-		
+
 		local ti = TweenInfo.new(0.4,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
 		tweenNumber(100,ti,function(val)
 			    val = val/200
@@ -10794,9 +10800,9 @@ Main = (function()
 				backGradient.Transparency = NumberSequence.new({start,a1,a2,b2,b1,goal})
 				outlinesGradient.Transparency = NumberSequence.new({start,a1,a2,b2,b1,goal})
 		end)
-		
+
 		fastwait(0.4)
-		
+
 		tweenNumber(100,ti,function(val)
 			val = val/166.66
 			local start = NumberSequenceKeypoint.new(0,0)
@@ -10805,10 +10811,10 @@ Main = (function()
 			local goal = NumberSequenceKeypoint.new(1,1)
 			holderGradient.Transparency = NumberSequence.new({start,a1,a2,goal})
 		end)
-		
+
 		tweenS:Create(titleText,ti,{Position = UDim2.new(0,60,0,15), TextTransparency = 0}):Play()
 		tweenS:Create(descText,ti,{Position = UDim2.new(0,20,0,60), TextTransparency = 0}):Play()
-		
+
 		local function rightTextTransparency(obj)
 			tweenNumber(100,ti,function(val)
 				val = val/100
@@ -10822,21 +10828,21 @@ Main = (function()
 		end
 		rightTextTransparency(versionGradient)
 		rightTextTransparency(creatorGradient)
-		
+
 		fastwait(0.9)
-		
+
 		local progressTI = TweenInfo.new(0.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
-		
+
 		tweenS:Create(statusText,progressTI,{Position = UDim2.new(0,20,0,120), TextTransparency = 0}):Play()
 		tweenS:Create(progressBar,progressTI,{Position = UDim2.new(0,60,0,145), Size = UDim2.new(0,100,0,4)}):Play()
-		
+
 		fastwait(0.25)
-		
+
 		local function setProgress(text,n)
 			statusText.Text = text
 			tweenS:Create(progressBar.Bar,progressTI,{Size = UDim2.new(n,0,1,0)}):Play()
 		end
-		
+
 		local function close()
 			tweenS:Create(titleText,progressTI,{TextTransparency = 1}):Play()
 			tweenS:Create(descText,progressTI,{TextTransparency = 1}):Play()
@@ -10846,7 +10852,7 @@ Main = (function()
 			tweenS:Create(progressBar,progressTI,{BackgroundTransparency = 1}):Play()
 			tweenS:Create(progressBar.Bar,progressTI,{BackgroundTransparency = 1}):Play()
 			tweenS:Create(progressBar.ImageLabel,progressTI,{ImageTransparency = 1}):Play()
-			
+
 			tweenNumber(100,TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.In),function(val)
 				val = val/250
 				local start = NumberSequenceKeypoint.new(0,0)
@@ -10856,11 +10862,11 @@ Main = (function()
 				local goal = NumberSequenceKeypoint.new(1,a1 == a2 and 0 or 1)
 				holderGradient.Transparency = NumberSequence.new({start,a1,a2,goal})
 			end)
-			
+
 			fastwait(0.5)
 			gui.Main.BackgroundTransparency = 1
 			outlinesGradient.Rotation = 30
-			
+
 			tweenNumber(100,ti,function(val)
 				val = val/100
 				local start = NumberSequenceKeypoint.new(0,1)
@@ -10871,20 +10877,20 @@ Main = (function()
 				outlinesGradient.Transparency = NumberSequence.new({start,a1,a2,goal})
 				holderGradient.Transparency = NumberSequence.new({start,a1,a2,goal})
 			end)
-			
+
 			fastwait(0.45)
 			gui:Destroy()
 		end
-		
+
 		return {SetProgress = setProgress, Close = close}
 	end
-	
+
 	Main.CreateApp = function(data)
 		if Main.MenuApps[data.Name] then return end -- TODO: Handle conflict
 		local control = {}
-		
+
 		local app = Main.AppTemplate:Clone()
-		
+
 		local iconIndex = data.Icon
 		if data.IconMap and iconIndex then
 			if type(iconIndex) == "number" then
@@ -10897,12 +10903,12 @@ Main = (function()
 		else
 			app.Main.Icon.Image = ""
 		end
-		
+
 		local function updateState()
 			app.Main.BackgroundTransparency = data.Open and 0 or (Lib.CheckMouseInGui(app.Main) and 0 or 1)
 			app.Main.Highlight.Visible = data.Open
 		end
-		
+
 		local function enable(silent)
 			if data.Open then return end
 			data.Open = true
@@ -10912,7 +10918,7 @@ Main = (function()
 				if data.OnClick then data.OnClick(data.Open) end
 			end
 		end
-		
+
 		local function disable(silent)
 			if not data.Open then return end
 			data.Open = false
@@ -10922,58 +10928,58 @@ Main = (function()
 				if data.OnClick then data.OnClick(data.Open) end
 			end
 		end
-		
+
 		updateState()
-		
+
 		local ySize = service.TextService:GetTextSize(data.Name,14,Enum.Font.SourceSans,Vector2.new(62,999999)).Y
 		app.Main.Size = UDim2.new(1,0,0,math.clamp(46+ySize,60,74))
 		app.Main.AppName.Text = data.Name
-		
+
 		app.Main.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseMovement then
 				app.Main.BackgroundTransparency = 0
 				app.Main.BackgroundColor3 = Settings.Theme.ButtonHover
 			end
 		end)
-		
+
 		app.Main.InputEnded:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseMovement then
 				app.Main.BackgroundTransparency = data.Open and 0 or 1
 				app.Main.BackgroundColor3 = Settings.Theme.Button
 			end
 		end)
-		
+
 		app.Main.MouseButton1Click:Connect(function()
 			if data.Open then disable() else enable() end
 		end)
-		
+
 		local window = data.Window
 		if window then
 			window.OnActivate:Connect(function() enable(true) end)
 			window.OnDeactivate:Connect(function() disable(true) end)
 		end
-		
+
 		app.Visible = true
 		app.Parent = Main.AppsContainer
 		Main.AppsFrame.CanvasSize = UDim2.new(0,0,0,Main.AppsContainerGrid.AbsoluteCellCount.Y*82 + 8)
-		
+
 		control.Enable = enable
 		control.Disable = disable
 		Main.MenuApps[data.Name] = control
 		return control
 	end
-	
+
 	Main.SetMainGuiOpen = function(val)
 		Main.MainGuiOpen = val
-		
+
 		Main.MainGui.OpenButton.Text = val and "X" or "Dex"
 		if val then Main.MainGui.OpenButton.MainFrame.Visible = true end
 		Main.MainGui.OpenButton.MainFrame:TweenSize(val and UDim2.new(0,224,0,200) or UDim2.new(0,0,0,0),Enum.EasingDirection.Out,Enum.EasingStyle.Quad,0.2,true)
 		--Main.MainGui.OpenButton.BackgroundTransparency = val and 0 or (Lib.CheckMouseInGui(Main.MainGui.OpenButton) and 0 or 0.2)
 		service.TweenService:Create(Main.MainGui.OpenButton,TweenInfo.new(0.2,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundTransparency = val and 0 or (Lib.CheckMouseInGui(Main.MainGui.OpenButton) and 0 or 0.2)}):Play()
-		
+
 		if Main.MainGuiMouseEvent then Main.MainGuiMouseEvent:Disconnect() end
-		
+
 		if not val then
 			local startTime = tick()
 			Main.MainGuiCloseTime = startTime
@@ -10989,7 +10995,7 @@ Main = (function()
 			end)
 		end
 	end
-	
+
 	Main.CreateMainGui = function()
 		local gui = create({
 			{1,"ScreenGui",{IgnoreGuiInset=true,Name="MainMenu",}},
@@ -11020,7 +11026,7 @@ Main = (function()
 		Main.AppsContainerGrid = Main.AppsContainer.UIGridLayout
 		Main.AppTemplate = gui.App
 		Main.MainGuiOpen = false
-		
+
 		local openButton = gui.OpenButton
 		openButton.BackgroundTransparency = 0.2
 		openButton.MainFrame.Size = UDim2.new(0,0,0,0)
@@ -11028,7 +11034,7 @@ Main = (function()
 		openButton.MouseButton1Click:Connect(function()
 			Main.SetMainGuiOpen(not Main.MainGuiOpen)
 		end)
-		
+
 		openButton.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseMovement then
 				service.TweenService:Create(Main.MainGui.OpenButton,TweenInfo.new(0,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundTransparency = 0}):Play()
@@ -11040,12 +11046,12 @@ Main = (function()
 				service.TweenService:Create(Main.MainGui.OpenButton,TweenInfo.new(0,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundTransparency = Main.MainGuiOpen and 0 or 0.2}):Play()
 			end
 		end)
-		
+
 		-- Create Main Apps
 		Main.CreateApp({Name = "Explorer", IconMap = Main.LargeIcons, Icon = "Explorer", Open = true, Window = Explorer.Window})
-		
+
 		Main.CreateApp({Name = "Properties", IconMap = Main.LargeIcons, Icon = "Properties", Open = true, Window = Properties.Window})
-		
+
 		Main.CreateApp({Name = "Script Viewer", IconMap = Main.LargeIcons, Icon = "Script_Viewer", Window = ScriptViewer.Window})
 
 		local cptsOnMouseClick = nil
@@ -11063,10 +11069,20 @@ Main = (function()
 				end)
 			else if cptsOnMouseClick ~= nil then cptsOnMouseClick:Disconnect() cptsOnMouseClick = nil end end
 		end})
-		
+
+        Main.CreateApp({Name = "Rejoin Server", IconMap = Main.LargeIcons, Icon = 9, OnClick = function(callback)
+			if #service.Players:GetPlayers() <= 1 then
+                plr:Kick("")
+                task.wait()
+                service.TeleportService:Teleport(game.PlaceId)
+            else
+                service.TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, plr)
+            end
+		end})
+
 		Lib.ShowGui(gui)
 	end
-	
+
 	Main.SetupFilesystem = function()
 		if not env.writefile or not env.makefolder then return end
 		local writefile, makefolder = env.writefile, env.makefolder
@@ -11075,26 +11091,28 @@ Main = (function()
 		makefolder("dex/saved")
 		makefolder("dex/plugins")
 		makefolder("dex/ModuleCache")
+		writefile('dex/assets/classes.png', game:HttpGet('https://androssy.net/images/ClassImages.png'))
+		getgenv().classImages = getcustomasset and getcustomasset('dex/assets/classes.png') or 'rbxasset://textures/ClassImages.png'
 	end
-	
+
 	Main.LocalDepsUpToDate = function()
 		return Main.DepsVersionData and Main.ClientVersion == Main.DepsVersionData[1]
 	end
-	
+
 	Main.Init = function()
 		Main.Elevated = pcall(function() local a = cloneref(game:GetService("CoreGui")):GetFullName() end)
 		Main.InitEnv()
 		Main.LoadSettings()
 		Main.SetupFilesystem()
-		
+
 		-- Load Lib
 		local intro = Main.CreateIntro("Initializing Library")
 		Lib = Main.LoadModule("Lib")
 		Lib.FastWait()
-		
+
 		-- Init other stuff
 		--Main.IncompatibleTest()
-		
+
 		-- Init icons
 		Main.MiscIcons = Lib.IconMap.new("rbxassetid://6511490623",256,256,16,16)
 		Main.MiscIcons:SetDict({
@@ -11109,7 +11127,7 @@ Main = (function()
 		Main.LargeIcons:SetDict({
 			Explorer = 0, Properties = 1, Script_Viewer = 2,
 		})
-		
+
 		-- Fetch version if needed
 		intro.SetProgress("Fetching Roblox Version",0.2)
 		if Main.Elevated then
@@ -11123,7 +11141,7 @@ Main = (function()
 			end
 			Main.RobloxVersion = Main.RobloxVersion or game:HttpGet("http://setup.roblox.com/versionQTStudio")
 		end
-		
+
 		-- Fetch external deps
 		intro.SetProgress("Fetching API",0.35)
 		API = Main.FetchAPI()
@@ -11131,34 +11149,34 @@ Main = (function()
 		intro.SetProgress("Fetching RMD",0.5)
 		RMD = Main.FetchRMD()
 		Lib.FastWait()
-		
+
 		-- Save external deps locally if needed
 		if Main.Elevated and env.writefile and not Main.LocalDepsUpToDate() then
 			env.writefile("dex/deps_version.dat",Main.ClientVersion.."\n"..Main.RobloxVersion)
 			env.writefile("dex/rbx_api.dat",Main.RawAPI)
 			env.writefile("dex/rbx_rmd.dat",Main.RawRMD)
 		end
-		
+
 		-- Load other modules
 		intro.SetProgress("Loading Modules",0.75)
 		Main.AppControls.Lib.InitDeps(Main.GetInitDeps()) -- Missing deps now available
 		Main.LoadModules()
 		Lib.FastWait()
-		
+
 		-- Init other modules
 		intro.SetProgress("Initializing Modules",0.9)
 		Explorer.Init()
 		Properties.Init()
 		ScriptViewer.Init()
 		Lib.FastWait()
-		
+
 		-- Done
 		intro.SetProgress("Complete",1)
 		coroutine.wrap(function()
 			Lib.FastWait(1.25)
 			intro.Close()
 		end)()
-		
+
 		-- Init window system, create main menu, show explorer and properties
 		Lib.Window.Init()
 		Main.CreateMainGui()
@@ -11166,7 +11184,7 @@ Main = (function()
 		Properties.Window:Show({Align = "right", Pos = 2, Size = 0.5, Silent = true})
 		Lib.DeferFunc(function() Lib.Window.ToggleSide("right") end)
 	end
-	
+
 	return Main
 end)()
 
