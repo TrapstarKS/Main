@@ -4227,12 +4227,12 @@ local function main()
 	end
 
 	ScriptViewer.CopyBase64 = function(src)
+		print("Copying base64")
 		local s, bytecode = pcall(env.getscriptbytecode, scr)
 		if not s then
 			return "failed to get bytecode " .. tostring(bytecode)
 		end
-
-		setclipboard(env.base64encode(tostring(bytecode)))
+		env.setclipboard(env.base64encode(tostring(bytecode)))
 	end
 
 	ScriptViewer.Init = function()
