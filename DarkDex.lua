@@ -11063,8 +11063,12 @@ Main = (function()
 		makefolder("dex/saved")
 		makefolder("dex/plugins")
 		makefolder("dex/ModuleCache")
-		writefile('dex/assets/classes.png', game:HttpGet('https://androssy.net/images/ClassImages.png'))
-		getgenv().classImages = getcustomasset and getcustomasset('dex/assets/classes.png') or 'rbxasset://textures/ClassImages.png'
+		pcall(function()
+			if not isfile("dex/assets/classes.png") then
+				writefile("dex/assets/classes.png", game:HttpGet('https://androssy.net/images/ClassImages.png'))
+			end
+		end)
+		getgenv().classImages = isfile("dex/assets/classes.png") and getcustomasset and getcustomasset('dex/assets/classes.png') or 'rbxasset://textures/ClassImages.png'
 	end
 
 	Main.LocalDepsUpToDate = function()
