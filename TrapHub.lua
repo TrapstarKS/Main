@@ -1,1 +1,1 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/TrapstarKS/StarHub/main/Loader.lua"))();
+loadstring(game:HttpGet("https://raw.githubusercontent.com/TrapstarKS/Signal/main/Loader.lua"))();
