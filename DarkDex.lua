@@ -9,7 +9,87 @@
 	Dex is a debugging suite designed to help the user debug games and find any potential vulnerabilities.
 ]]
 
+-- Thanks corewave
+type = typeof or type
+local str_types = {
+    ['boolean'] = true,
+    ['userdata'] = true,
+    ['table'] = true,
+    ['function'] = true,
+    ['number'] = true,
+    ['nil'] = true
+}
 
+local function count_table(t)
+    local c = 0
+    for i, v in next, t do
+        c = c + 1
+    end
+
+    return c
+end
+
+local function string_ret(o, typ)
+    local ret, mt, old_func
+    if not (typ == 'table' or typ == 'userdata') then
+        return tostring(o)
+    end
+    mt = (getrawmetatable or getmetatable)(o)
+    if not mt then 
+        return tostring(o)
+    end
+    old_func = rawget(mt, '__tostring')
+    rawset(mt, '__tostring', nil)
+    ret = tostring(o)
+    rawset(mt, '__tostring', old_func)
+    return ret
+end
+
+local function format_value(v)
+    local typ = type(v)
+
+    if str_types[typ] then
+        return string_ret(v, typ)
+    elseif typ == 'string' then
+        return '"'..v..'"'
+    elseif typ == 'Instance' then
+        return v.GetFullName(v)
+    else
+        return typ..'.new(' .. tostring(v) .. ')'
+    end
+end
+
+local function serialize_table(t, p, c, s)
+    if type(t) ~= 'table' then
+        return format_value(t)
+    end
+
+    local str = ""
+    local n = count_table(t)
+    local ti = 1
+    local e = n > 0
+
+    c = c or {}
+    p = p or 1
+    s = s or string.rep
+
+    local function localized_format(v, is_table)
+        return is_table and (c[v][2] >= p) and serialize_table(v, p + 1, c, s) or format_value(v)
+    end
+
+    c[t] = {t, 0}
+
+    for i, v in next, t do
+        local typ_i, typ_v = type(i) == 'table', type(v) == 'table'
+        c[i], c[v] = (not c[i] and typ_i) and {i, p} or c[i], (not c[v] and typ_v) and {v, p} or c[v]
+        str = str .. s('  ', p) .. '[' .. localized_format(i, typ_i) .. '] = '  .. localized_format(v, typ_v) .. (ti < n and ',' or '') .. '\n'
+        ti = ti + 1
+    end
+
+    return ('{' .. (e and '\n' or '')) .. str .. (e and s('  ', p - 1) or '') .. '}'
+end
+
+getgenv().prettyPrint = serialize_table
 getgenv().classImages = nil;
 local nodes = {}
 local selection
@@ -880,7 +960,7 @@ local function main()
 
 		context:AddDivider()
 		if expanded == Explorer.SearchExpanded then context:AddRegistered("CLEAR_SEARCH_AND_JUMP_TO") end
-		if env.setclipboard then context:AddRegistered("COPY_PATH") end
+		if env.setclipboard then context:AddRegistered("COPY_PATH") context:AddRegistered("COPY_NODE") end
 		context:AddRegistered("INSERT_OBJECT")
 		context:AddRegistered("SAVE_INST")
 		context:AddRegistered("CALL_FUNCTION")
@@ -893,6 +973,7 @@ local function main()
 		if presentClasses["BasePart"] or presentClasses["Model"] then
 			context:AddRegistered("TELEPORT_TO")
 			context:AddRegistered("VIEW_OBJECT")
+			context:AddRegistered("SELECT_PLAYER")
 		end
 
 		if presentClasses["TouchTransmitter"] then context:AddRegistered("FIRE_TOUCHTRANSMITTER", firetouchinterest == nil) end
@@ -1226,6 +1307,12 @@ local function main()
 			end
 		end})
 
+		context:Register("COPY_NODE",{Name = "Copy Node Info", OnClick = function()
+			local sList = selection.List
+			local node = sList[1]
+			--env.setclipboard(serialize_table(node))
+		end})
+
 		context:Register("INSERT_OBJECT",{Name = "Insert Object", IconMap = Explorer.MiscIcons, Icon = "InsertObject", OnClick = function()
 			local mouse = Main.Mouse
 			local x,y = Explorer.LastRightClickX or mouse.X, Explorer.LastRightClickY or mouse.Y
@@ -1321,6 +1408,22 @@ local function main()
 				Explorer.ViewNode(newSelection[1])
 			else
 				Explorer.Refresh()
+			end
+		end})
+
+		context:Register("SELECT_PLAYER", {Name = "Select Player", IconMap = Explorer.ClassIcons, Icon = 9, OnClick = function()
+			local sList = selection.List
+			local isa = game.IsA
+
+			local node = sList[1]
+			if isa(node.Obj,"Model") then
+				for _, v in ipairs(game.Players:GetPlayers()) do
+					if v.Character == node.Obj then
+						selection:Set(nodes[v])
+						Explorer.ViewNode(nodes[v])
+						break
+					end
+				end
 			end
 		end})
 
@@ -4235,7 +4338,7 @@ local function main()
 	local PreviousScr = nil
 
 	ScriptViewer.ViewScript = function(scr)
-		local success, source = pcall(env.decompile or function() end, scr)
+		local success, source = pcall(getgenv().decompile or function() end, scr)
 		if not success or not source then source, PreviousScr = "-- DEX - Source failed to decompile", nil else PreviousScr = scr end
 		codeFrame:SetText(source:gsub("\0", "\\0")) -- Fix stupid breaking script viewer
 		window:Show()
@@ -10382,7 +10485,6 @@ Main = (function()
         -- other
         --env.setfflag = setfflag
         env.request = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
-        env.decompile = decompile
         env.protectgui = protect_gui or (syn and syn.protect_gui)
         env.gethui = gethui or get_hidden_gui
         env.setclipboard = setclipboard or toclipboard or set_clipboard or (Clipboard and Clipboard.set)
@@ -11042,6 +11144,8 @@ Main = (function()
 			else if cptsOnMouseClick ~= nil then cptsOnMouseClick:Disconnect() cptsOnMouseClick = nil end end
 		end})
 
+		
+
         Main.CreateApp({Name = "Rejoin Server", IconMap = Main.LargeIcons, Icon = 9, OnClick = function(callback)
 			if #service.Players:GetPlayers() <= 1 then
                 plr:Kick("")
@@ -11058,19 +11162,24 @@ Main = (function()
 	Main.SetupFilesystem = function()
 		if not env.writefile or not env.makefolder then return end
 		local writefile, makefolder = env.writefile, env.makefolder
-		makefolder("dex")
-		makefolder("dex/assets")
-		makefolder("dex/saved")
-		makefolder("dex/plugins")
-		makefolder("dex/ModuleCache")
-		pcall(function()
-			if not isfile("dex/assets/classes.png") then
-				writefile("dex/assets/classes.png", game:HttpGet('https://androssy.net/images/ClassImages.png'))
+		local folders = {"dex", "dex/assets", "dex/saved", "dex/plugins", "dex/ModuleCache"}
+		for _, folder in ipairs(folders) do
+			makefolder(folder)
+		end
+		local assetPath = "dex/assets/classes.png"
+		local defaultAsset = 'rbxasset://textures/ClassImages.png'
+		if getcustomasset then
+			if not isfile(assetPath) then
+				pcall(function()
+					writefile(assetPath, game:HttpGet('https://androssy.net/images/ClassImages.png'))
+				end)
 			end
-		end)
-		getgenv().classImages = isfile("dex/assets/classes.png") and getcustomasset and getcustomasset('dex/assets/classes.png') or 'rbxasset://textures/ClassImages.png'
+			getgenv().classImages = isfile(assetPath) and getcustomasset(assetPath) or defaultAsset
+		else
+			getgenv().classImages = defaultAsset
+		end
 	end
-
+	
 	Main.LocalDepsUpToDate = function()
 		return Main.DepsVersionData and Main.ClientVersion == Main.DepsVersionData[1]
 	end
