@@ -1417,7 +1417,7 @@ local function main()
 
 			local node = sList[1]
 			if isa(node.Obj,"Model") then
-				for _, v in ipairs(game.Players:GetPlayers()) do
+				for _, v in ipairs(cloneref(game:GetService("Players")):GetPlayers()) do
 					if v.Character == node.Obj then
 						selection:Set(nodes[v])
 						Explorer.ViewNode(nodes[v])
