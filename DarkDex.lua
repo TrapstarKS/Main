@@ -3,8 +3,8 @@
 --[[
 	New Dex
 	Final Version
-	Developed by Moon
-	Modified for Infinite Yield
+	Developed by LorekeeperZinnia
+	Modified by Trapstar
 
 	Dex is a debugging suite designed to help the user debug games and find any potential vulnerabilities.
 ]]
