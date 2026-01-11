@@ -1568,9 +1568,11 @@ local EmbeddedModules = {
 					OnClick = function()
 						local src = selection.List[1] and selection.List[1].Obj
 						if src then
-							for i = 1, 4 do
-								task.spawn(function() env.setclipboard(env.base64encode(env.getscriptbytecode(src))) end)
-							end
+							local text = env.base64encode(env.getscriptbytecode(src))
+								
+							-- for i = 1, 4 do
+							env.setclipboard(text)
+							-- end
 						end
 					end,
 				})
@@ -12660,8 +12662,22 @@ Main = (function()
 		env.checkcaller = checkcaller
 		--env.getreg = getreg
 		env.getgc = getgc or get_gc_objects
-		env.base64encode = (crypt and crypt.base64 and crypt.base64.encode) or (base64 and base64.encode)
 		env.getscriptbytecode = getscriptbytecode
+
+		env.base64encode = function(data)
+					local b = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+					--stylua: ignore
+					return ((data:gsub('.', function(x) 
+						local r,b='',x:byte()
+						for i=8,1,-1 do r=r..(b%2^i-b%2^(i-1)>0 and '1' or '0') end
+						return r;
+					end)..'0000'):gsub('%d%d%d?%d?%d?%d?', function(x)
+						if (#x < 6) then return '' end
+						local c=0
+						for i=1,6 do c=c+(x:sub(i,i)=='1' and 2^(6-i) or 0) end
+						return b:sub(c+1,c+1)
+					end)..({ '', '==', '=' })[#data%3+1])
+				end
 
 		-- other
 		--env.setfflag = setfflag
